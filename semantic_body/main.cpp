@@ -44,11 +44,10 @@ void measureOne() {
 
 	Eigen::Matrix3Xd V;
 	Eigen::Matrix3Xi F;
-	readAVE(V, F);
+	common::read_obj("./data/AVE.obj", V, F);
 
 	measure measure;
 	measure.calcExact(V, F);
-
 }
 
 void testGurobi() {
@@ -69,6 +68,7 @@ int main()
 {
 	clock_t t = clock();
 	//testGurobi();
+	measureOne();
 
 	cout << "Total time used...." << endl;
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;

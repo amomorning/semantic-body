@@ -9,11 +9,7 @@ using namespace surface_mesh;
 
 vector<string> getFiles(string cate_dir);
 
-void readAVE(Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F);
-
 void calcAverage(Eigen::MatrixXd V, Eigen::Matrix3Xi F);
-
-Eigen::MatrixXd getNeighbor(int id, Eigen::VectorXi &N, Eigen::VectorXd &V);
 
 Eigen::Matrix3d getAffineMatrix();
 
