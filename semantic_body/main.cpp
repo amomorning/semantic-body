@@ -7,24 +7,40 @@
 #include "measure.h"
 #include "preprocessing.h"
 
-void basicInitialize() {
+void GenerateBinaryData() {
 	std::string path = "C:/Users/amomorning/dataset/SPRING_MALE/SPRING_MALE/";
 
 	vector<string> files = getFiles(path + "*");
 
 	////calcAverage(AVEobj, path, files);
-	string filename = "./F";
+
+	string vertsFilename = "./data/V";
+	string facesFilename = "./data/F";
+
 	//saveBinVerts(filename, path, files);
-	saveBinFaces(filename, path, files);
+	saveBinFaces(facesFilename, path, files);
+	// with F shape (3, 12500)
+	saveBinVerts(vertsFilename, path, files);
+	// with V shape (37500, 1511)
 
-	////calcNeighbor();
+	//calcAverage();
+	Eigen::MatrixXd V;
+	Eigen::Matrix3Xi F;
 
+	common::read_matrix_binary_from_file("./data/V", V);
+	common::read_matrix_binary_from_file("./data/F", F);
+	cout << F.cols() << endl;
+	calcAverage(V, F);
+	//calcNeighbor();
+	calcNeighbor();
+	// with neighbour shape (12500, 11)
+
+	cout << "All is done!" << endl;
 
 }
 
 
 void measureOne() {
-	clock_t t = clock();
 
 	Eigen::Matrix3Xd V;
 	Eigen::Matrix3Xi F;
@@ -33,8 +49,6 @@ void measureOne() {
 	measure measure;
 	measure.calcExact(V, F);
 
-	cout << "Total time used...." << endl;
-	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
 }
 
 void testGurobi() {
@@ -53,9 +67,11 @@ void testGurobi() {
 
 int main()
 {
-
-	measureOne();
+	clock_t t = clock();
 	//testGurobi();
+
+	cout << "Total time used...." << endl;
+	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
 	getchar();
 	return 0;
 }

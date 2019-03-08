@@ -17,20 +17,25 @@
 using namespace std;
 using namespace surface_mesh;
 
+
+// Return a vector<string> of files in input cateloge direction.
+// The files will be sorted.
+
 vector<string> getFiles(string cate_dir)
 {
 	vector<string> files;
 
 	_finddata_t file;
-	long lf;
+	intptr_t lf;
+	// the type should be intptr_t in x64 machine
+	// but it will be fine using long in x86
 
 	if ((lf = _findfirst(cate_dir.c_str(), &file)) == -1) {
 		cout << cate_dir << " not found!!!" << endl;
 	}
 	else {
 		while (_findnext(lf, &file) == 0) {
-			//输出文件名
-			//cout<<file.name<<endl;
+			// cout<<file.name<<endl;
 			if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0)
 				continue;
 			files.push_back(file.name);
@@ -42,6 +47,7 @@ vector<string> getFiles(string cate_dir)
 	return files;
 }
 
+// Read the average body obj 
 void readAVE(Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F) {
 	string AVEobj = "C:/Users/amomorning/dataset/SPRING_MALE/AVE.obj";
 
@@ -49,49 +55,22 @@ void readAVE(Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F) {
 	return;
 }
 
-void calcAverage(string &filename, string &path, vector<string> &files) {
-	Eigen::Matrix3Xd V;
-	Eigen::Matrix3Xi F;
-	V.resize(3, VERTS);
-	for (int i = 0; i < V.rows(); ++i) {
-		for (int j = 0; j < V.cols(); ++j) {
-			V(i, j) = 0;
-		}
-	}
-	for (auto file : files) {
-		Eigen::Matrix3Xd vv;
-		common::read_obj(path + file, vv, F);
-		V += vv;
-		cout << file << endl;
-	}
-	V /= files.size();
-	common::save_obj(filename, V, F);
+//Calculate the average data
+void calcAverage(Eigen::MatrixXd V, Eigen::Matrix3Xi F) {
+	Eigen::MatrixXd newV;
+	newV = V.rowwise().mean();
+	newV.resize(3, VERTS);
+		
+	common::save_obj("./data/AVE.obj", newV, F);
 	//cout << "ojk";
 }
 
-/*
-Eigen::MatrixXd getNeighbor(int id, Eigen::VectorXi &N, Eigen::VectorXd &V) {
-	for (int i = 0; i < N.rows(); ++i) {
-		if (N(i) == -1) break;
-		int cur = N(i);
-		for (int j = 0; j < 3; ++j) {
-
-		}
-	}
-}
-
-Eigen::Matrix3d getAffineMatrix() {
-
-
-}
-
-*/
 void getDeformation(Eigen::VectorXd ave, Eigen::MatrixXd &V) {
 	Eigen::MatrixXd out;
 	out.resize(V.rows(), V.cols() * 3);
 
 	Eigen::MatrixXi N;
-	common::read_matrix_binary_from_file("./neighbor", N);
+	common::read_matrix_binary_from_file("./data/neighbor", N);
 
 
 
@@ -130,9 +109,11 @@ void saveCotWeight(Eigen::Matrix3d V, Eigen::Matrix3i F) {
 	}
 }
 
+// Save all verts in the shape of 3x|V| in binary. 
 void saveBinVerts(string &filename, string &path, vector<string> files) {
 	Eigen::MatrixXd V;
 	V.resize(VERTS * 3, files.size());
+	cout << "V.shape = " << V.rows() << " " << V.cols() << endl;
 	int k = 0;
 	for (auto file : files) {
 		Eigen::Matrix3Xd vv;
@@ -140,11 +121,10 @@ void saveBinVerts(string &filename, string &path, vector<string> files) {
 		common::read_obj(path + file, vv, ff);
 		int cnt = 0;
 		cout << vv.cols() << " " << vv.rows() << endl;
+		// be careful with the cols and rows
 		for (int i = 0; i < vv.cols(); ++i) {
-
 			for (int j = 0; j < vv.rows(); ++j) {
-
-				V(cnt++, k) = vv(i, j);
+				V(cnt++, k) = vv(j, i);
 			}
 		}
 		cout << "cnt = " << file << endl;
@@ -163,8 +143,13 @@ void saveBinFaces(string &filename, string &path, vector<string> files) {
 }
 
 
+// Save 1-based Neibourhood vertex of each vertex..
+// You should be careful about the index of vertex.
+// The vertex in model is 0-based while it saved with 1-based
+// It means i-1 cols is the neibour of ith vertex in 1-based
+
 void calcNeighbor() {
-	string AVEobj = "C:/Users/amomorning/dataset/SPRING_MALE/AVE.obj";
+	string AVEobj = "./data/AVE.obj";
 	Eigen::Matrix3Xd V;
 	Eigen::Matrix3Xi F;
 	common::read_obj(AVEobj, V, F);
@@ -176,7 +161,7 @@ void calcNeighbor() {
 	out.resize(VERTS, 11);
 	for (int i = 0; i < VERTS; ++i) {
 		for (int j = 0; j < 11; ++j) {
-			out(i, j) = -1;
+			out(i, j) = 0;
 		}
 	}
 
@@ -195,7 +180,7 @@ void calcNeighbor() {
 		int cnt = 0;
 		do {
 			//std::cout << (*vc).idx() << " ";
-			out(total, cnt) = (*vc).idx();
+			out(total, cnt) = (*vc).idx() + 1;
 			cnt++;
 		} while (++vc != vc_end);
 		//std::cout << "\n";
@@ -205,9 +190,9 @@ void calcNeighbor() {
 	} while (++vit != mesh.vertices_end());
 	cout << "total = " << total << " max = " << mmax << endl;
 
-	cout << out.rows() << endl;
+	cout << "(" << out.rows() << ", " << out.cols() << ")" << endl;
 	//save as binary
-	common::write_matrix_binary_to_file("./neighbor", out);
+	common::write_matrix_binary_to_file("./data/neighbor", out);
 }
 
 
