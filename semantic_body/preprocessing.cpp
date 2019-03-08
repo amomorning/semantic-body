@@ -47,13 +47,6 @@ vector<string> getFiles(string cate_dir)
 	return files;
 }
 
-// Read the average body obj 
-void readAVE(Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F) {
-	string AVEobj = "C:/Users/amomorning/dataset/SPRING_MALE/AVE.obj";
-
-	common::read_obj(AVEobj, V, F);
-	return;
-}
 
 //Calculate the average data
 void calcAverage(Eigen::MatrixXd V, Eigen::Matrix3Xi F) {
