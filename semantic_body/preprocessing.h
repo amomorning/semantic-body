@@ -15,9 +15,9 @@ Eigen::Matrix3d getAffineMatrix();
 
 void getDeformation(Eigen::VectorXd ave, Eigen::MatrixXd &V);
 
-void saveBinVerts(string &filename, string &path, vector<string> files);
+void saveBinVerts(const char *filename, string &path, vector<string> files);
 
-void saveBinFaces(string &filename, string &path, vector<string> files);
+void saveBinFaces(const char *filename, string &path, vector<string> files);
 
 void calcNeighbor();
 

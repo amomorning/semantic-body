@@ -9,18 +9,12 @@
 
 void GenerateBinaryData() {
 	std::string path = "C:/Users/amomorning/dataset/SPRING_MALE/SPRING_MALE/";
-
 	vector<string> files = getFiles(path + "*");
 
-	////calcAverage(AVEobj, path, files);
-
-	string vertsFilename = "./data/V";
-	string facesFilename = "./data/F";
-
 	//saveBinVerts(filename, path, files);
-	saveBinFaces(facesFilename, path, files);
+	saveBinFaces("./data/F", path, files);
 	// with F shape (3, 12500)
-	saveBinVerts(vertsFilename, path, files);
+	saveBinVerts("./data/V", path, files);
 	// with V shape (37500, 1511)
 
 	//calcAverage();
@@ -31,6 +25,7 @@ void GenerateBinaryData() {
 	common::read_matrix_binary_from_file("./data/F", F);
 	cout << F.cols() << endl;
 	calcAverage(V, F);
+
 	//calcNeighbor();
 	calcNeighbor();
 	// with neighbour shape (12500, 11)

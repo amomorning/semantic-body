@@ -102,8 +102,8 @@ void saveCotWeight(Eigen::Matrix3d V, Eigen::Matrix3i F) {
 	}
 }
 
-// Save all verts in the shape of 3x|V| in binary. 
-void saveBinVerts(string &filename, string &path, vector<string> files) {
+// Save all verts in the shape of (3|V|, N) in binary. 
+void saveBinVerts(const char *filename, string &path, vector<string> files) {
 	Eigen::MatrixXd V;
 	V.resize(VERTS * 3, files.size());
 	cout << "V.shape = " << V.rows() << " " << V.cols() << endl;
@@ -123,15 +123,16 @@ void saveBinVerts(string &filename, string &path, vector<string> files) {
 		cout << "cnt = " << file << endl;
 		k++;
 	}
-	common::write_matrix_binary_to_file(filename.data(), V);
+	common::write_matrix_binary_to_file(filename, V);
 	cout << "ok" << endl;
 }
 
-void saveBinFaces(string &filename, string &path, vector<string> files) {
+// Save all faces in the shape of (3, |F|) in binary
+void saveBinFaces(const char *filename, string &path, vector<string> files) {
 	Eigen::Matrix3Xd vv;
 	Eigen::Matrix3Xi ff;
 	common::read_obj(path + files[0], vv, ff);
-	common::write_matrix_binary_to_file(filename.data(), ff);
+	common::write_matrix_binary_to_file(filename, ff);
 	cout << "ok" << endl;
 }
 

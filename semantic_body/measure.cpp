@@ -8,14 +8,9 @@
 using namespace std;
 
 
-measure::measure()
-{
-}
+measure::measure() { }
 
-
-measure::~measure()
-{
-}
+measure::~measure() { }
 
 void measure::writeVTK(const std::string &filename, std::vector<geodesic::SurfacePoint> &path) {
 	std::vector<double> nodes;
