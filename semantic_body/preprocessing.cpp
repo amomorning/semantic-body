@@ -12,11 +12,12 @@
 #include <geodesic/geodesic_algorithm_dijkstra.h>
 #include <geodesic/geodesic_algorithm_exact.h>
 
+#include <gurobi_c++.h>
+
 #define VERTS 12500
 
 using namespace std;
 using namespace surface_mesh;
-
 
 // Return a vector<string> of files in input cateloge direction.
 // The files will be sorted.
@@ -56,25 +57,6 @@ void calcAverage(Eigen::MatrixXd V, Eigen::Matrix3Xi F) {
 		
 	common::save_obj("./data/AVE.obj", newV, F);
 	//cout << "ojk";
-}
-
-void getDeformation(Eigen::VectorXd ave, Eigen::MatrixXd &V) {
-	Eigen::MatrixXd out;
-	out.resize(V.rows(), V.cols() * 3);
-
-	Eigen::MatrixXi N;
-	common::read_matrix_binary_from_file("./data/neighbor", N);
-
-
-
-	for (int i = 0; i < V.rows(); ++i) {
-		for (int j = 0; j < VERTS; ++j) {
-		}
-	}
-
-	cout << out << endl;
-	cout << out.rows() << " " << out.cols() << endl;
-	//common::write_matrix_binary_to_file("./affinematrix", out);
 }
 
 
@@ -190,29 +172,72 @@ void calcNeighbor() {
 }
 
 
-void calcAffineMatrix() {
-	string AVEobj = "C:/Users/amomorning/dataset/SPRING_MALE/AVE.obj";
-	Eigen::Matrix3Xd V;
-	Eigen::Matrix3Xi F;
-	common::read_obj(AVEobj, V, F);
+void calcFeature(const Eigen::Matrix3Xd &V, 
+				 const Eigen::Matrix3Xi &F,
+					   Eigen::MatrixXd &feature) 
+{
+	Eigen::MatrixXi N;
+	common::read_matrix_binary_from_file("./data/neighbor", N);
+	
+	Eigen::Matrix3Xd AVE;
+	Eigen::Matrix3Xi AVF;
+	common::read_obj("./data/AVE.obj", AVE, AVF);
+	
 
-	Eigen::VectorXd ave;
-	ave.resize(VERTS * 3);
-	int cnt = 0;
-	for (int i = 0; i < V.rows(); ++i) {
-		for (int j = 0; j < V.cols(); ++j) {
-			ave(cnt++) = V(i, j);
+	for (int i = 0; i < 1; ++i) {
+		GRBEnv env = GRBEnv();
+		GRBModel model = GRBModel(env);
+
+		GRBVar *Var = model.addVars(9, GRB_CONTINUOUS);
+		GRBQuadExpr obj = 0;
+		for (int j = 0; j < 11; ++j) {
+			if (N(i, j) == 0) break;
+			int k = N(i, j) - 1;
+
+			for (int n = 0; n < 3; ++n) {
+				GRBLinExpr tmp = V(n, i) - V(n, k);
+				for (int m = 0; m < 3; ++m) {
+					tmp -= Var[3*n+m]*(AVE(m, i) - AVE(m, k));
+				}
+				obj += tmp * tmp;
+			}
+		}
+		model.setObjective(obj);
+		model.optimize();
+
+		for (int i = 0; i < 3; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				cout << Var[i*3 + j].get(GRB_DoubleAttr_X) << "\t";
+			}
+			cout << endl;
 		}
 	}
 
-	Eigen::MatrixXd vv;
-	common::read_matrix_binary_from_file("./V", vv);
-	std::cout << vv.rows() << " " << vv.cols() << std::endl;
-
-
-	//Eigen::VectorXd row = vv.row(0);
-
-	//cout << row.rows() << endl;
 }
 
+void saveFeature(const Eigen::MatrixXd &V, 
+				 const Eigen::Matrix3Xi &F) 
+{
+	Eigen::MatrixXd feature;
+	feature.resize(9 * VERTS, V.cols());
+	for (int i = 0; i < V.cols(); ++i) {
+		Eigen::MatrixXd tmp = V.col(i);
+		tmp.resize(3, VERTS);
+		calcFeature(tmp, F, feature);
+		break;
+	}
+	//common::write_matrix_binary_to_file("./data/feature", feature);
+}
 
+void saveCotangentWeight() {
+	Eigen::MatrixXd cot;
+	cot.resize(VERTS, VERTS);
+	
+	Eigen::Matrix3Xd V;
+	Eigen::Matrix3Xi F;
+	common::read_obj("./data/AVE.obj", V, F);
+
+	Surface_mesh mesh;
+	build_mesh(V, F, mesh);
+	//common::write_matrix_binary_to_file("./data/cot", cot);
+}

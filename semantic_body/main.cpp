@@ -40,9 +40,13 @@ void measureOne() {
 	Eigen::Matrix3Xd V;
 	Eigen::Matrix3Xi F;
 	common::read_obj("./data/AVE.obj", V, F);
+	printShape(V, F);
 
 	measure measure;
-	measure.calcExact(V, F);
+	measure.calcDijkstra(V, F);
+	//measure.calcExact(V, F);
+
+
 }
 
 void testGurobi() {
@@ -50,6 +54,9 @@ void testGurobi() {
 	{
 		GRBEnv env = GRBEnv();
 		GRBModel model = GRBModel(env);
+		
+		GRBQuadExpr exp = 0;
+		
 
 		cout << "ok" << endl;
 	}
@@ -63,8 +70,17 @@ int main()
 {
 	clock_t t = clock();
 	//testGurobi();
-	measureOne();
+	//
+	//Eigen::MatrixXd V;
+	//Eigen::Matrix3Xi F;
 
+	//common::read_matrix_binary_from_file("./data/V", V);
+	//common::read_matrix_binary_from_file("./data/F", F);
+
+	//saveFeature(V, F);
+	//
+	saveCotangentWeight();
+	
 	cout << "Total time used...." << endl;
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
 	getchar();
