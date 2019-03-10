@@ -30,9 +30,12 @@ void saveBinFaces(const char *filename, string &path, vector<string> files);
 
 void calcNeighbor();
 
-void saveCotangentWeight();
+double laplacianCotanWeight(const Surface_mesh &mesh, const int i, const int j);
 
 void saveFeature(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
 
-void calcFeature(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F, Eigen::MatrixXd &feature);
+void calcFeature(const Eigen::Matrix3Xd &V, const Eigen::Matrix3Xi &F, Eigen::MatrixXd &feature);
+
+
 #endif DATA_PROCESS_H_H_
+

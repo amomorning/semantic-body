@@ -171,20 +171,27 @@ void calcNeighbor() {
 	common::write_matrix_binary_to_file("./data/neighbor", out);
 }
 
+double laplacianCotanWeight(const Surface_mesh &mesh,
+	const int i, const int j)
+{
+	return 1.0;
+}
 
 void calcFeature(const Eigen::Matrix3Xd &V, 
 				 const Eigen::Matrix3Xi &F,
 					   Eigen::MatrixXd &feature) 
 {
+	Surface_mesh mesh;
+	build_mesh(V, F, mesh);
+
 	Eigen::MatrixXi N;
 	common::read_matrix_binary_from_file("./data/neighbor", N);
 	
 	Eigen::Matrix3Xd AVE;
 	Eigen::Matrix3Xi AVF;
 	common::read_obj("./data/AVE.obj", AVE, AVF);
-	
 
-	for (int i = 0; i < 1; ++i) {
+	for (int i = 0; i < VERTS; ++i) {
 		GRBEnv env = GRBEnv();
 		GRBModel model = GRBModel(env);
 
@@ -193,18 +200,19 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 		for (int j = 0; j < 11; ++j) {
 			if (N(i, j) == 0) break;
 			int k = N(i, j) - 1;
-
+			double cij = laplacianCotanWeight(mesh, i, k);
 			for (int n = 0; n < 3; ++n) {
 				GRBLinExpr tmp = V(n, i) - V(n, k);
 				for (int m = 0; m < 3; ++m) {
 					tmp -= Var[3*n+m]*(AVE(m, i) - AVE(m, k));
 				}
-				obj += tmp * tmp;
+				obj += tmp * tmp * cij;
 			}
 		}
 		model.setObjective(obj);
 		model.optimize();
 
+		cout << "Matrix i == " << i << endl;
 		for (int i = 0; i < 3; ++i) {
 			for (int j = 0; j < 3; ++j) {
 				cout << Var[i*3 + j].get(GRB_DoubleAttr_X) << "\t";
@@ -227,17 +235,4 @@ void saveFeature(const Eigen::MatrixXd &V,
 		break;
 	}
 	//common::write_matrix_binary_to_file("./data/feature", feature);
-}
-
-void saveCotangentWeight() {
-	Eigen::MatrixXd cot;
-	cot.resize(VERTS, VERTS);
-	
-	Eigen::Matrix3Xd V;
-	Eigen::Matrix3Xi F;
-	common::read_obj("./data/AVE.obj", V, F);
-
-	Surface_mesh mesh;
-	build_mesh(V, F, mesh);
-	//common::write_matrix_binary_to_file("./data/cot", cot);
 }

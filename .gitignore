@@ -262,3 +262,7 @@ __pycache__/
 
 # data
 data/
+/bodyViz/Library
+/bodyViz/Temp
+/bodyViz/bodyViz.sln
+/bodyViz/Assembly-CSharp.csproj

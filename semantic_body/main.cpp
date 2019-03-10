@@ -70,16 +70,14 @@ int main()
 {
 	clock_t t = clock();
 	//testGurobi();
-	//
-	//Eigen::MatrixXd V;
-	//Eigen::Matrix3Xi F;
+	
+	Eigen::MatrixXd V;
+	Eigen::Matrix3Xi F;
 
-	//common::read_matrix_binary_from_file("./data/V", V);
-	//common::read_matrix_binary_from_file("./data/F", F);
+	common::read_matrix_binary_from_file("./data/V", V);
+	common::read_matrix_binary_from_file("./data/F", F);
 
-	//saveFeature(V, F);
-	//
-	saveCotangentWeight();
+	saveFeature(V, F);
 	
 	cout << "Total time used...." << endl;
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
