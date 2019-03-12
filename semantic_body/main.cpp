@@ -74,10 +74,17 @@ int main()
 	Eigen::MatrixXd V;
 	Eigen::Matrix3Xi F;
 
-	common::read_matrix_binary_from_file("./data/V", V);
+	common::read_matrix_binary_from_file("./data/dijkstra", V);
 	common::read_matrix_binary_from_file("./data/F", F);
 
-	saveDijkstra(V, F);
+	//saveVertsOffset(V);
+
+	for (int i = 0; i < 10; ++i) cout << V(0, i) << " ";
+	cout << endl;
+	for (int i = 1; i < 26; ++i) cout << V(i, 0) << "\n";
+	cout << endl;
+
+	measureOne();
 	
 	cout << "Total time used...." << endl;
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;

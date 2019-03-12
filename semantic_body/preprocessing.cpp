@@ -24,7 +24,7 @@ using namespace surface_mesh;
 // Return a vector<string> of files in input cateloge direction.
 // The files will be sorted.
 
-vector<string> getFiles(string cate_dir)
+vector<string> getFiles(const string &cate_dir)
 {
 	vector<string> files;
 
@@ -120,6 +120,15 @@ void saveBinFaces(const char *filename, const string &path, const vector<string>
 	cout << "ok" << endl;
 }
 
+void saveVertsOffset(const Eigen::MatrixXd &V) 
+{
+	Eigen::MatrixXd ret = V;
+	Eigen::VectorXd ave = V.rowwise().mean();
+	for (int i = 0; i < ret.cols(); ++i) {
+		ret.col(i) -= ave;
+	}
+	common::write_matrix_binary_to_file("./data/Verts", ret);
+}
 
 // Save 1-based Neibourhood vertex of each vertex..
 // You should be careful about the index of vertex.

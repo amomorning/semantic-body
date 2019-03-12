@@ -39,6 +39,7 @@ void saveFeature(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
 
 void calcFeature(const Eigen::Matrix3Xd &V, const Eigen::Matrix3Xi &F, Eigen::MatrixXd &feature);
 
+void saveVertsOffset(const Eigen::MatrixXd &V);
 
 #endif DATA_PROCESS_H_H_
 
