@@ -91,6 +91,9 @@ public:
 			cout << SemanticLable[i + N] << " = " << length[i] << endl;
 		}
 	}
+	int len() {
+		return N + M;
+	}
 
 };
 

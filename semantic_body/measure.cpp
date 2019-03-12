@@ -12,6 +12,7 @@ measure::measure() { }
 
 measure::~measure() { }
 
+// line to *.vtk, visualize the geodesics and check.
 void measure::writeVTK(const std::string &filename, std::vector<geodesic::SurfacePoint> &path) {
 	std::vector<double> nodes;
 	std::vector<int> lines;

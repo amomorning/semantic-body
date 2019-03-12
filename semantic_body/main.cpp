@@ -27,7 +27,7 @@ void GenerateBinaryData() {
 	calcAverage(V, F);
 
 	//calcNeighbor();
-	calcNeighbor();
+	saveNeighbor();
 	// with neighbour shape (12500, 11)
 
 	cout << "All is done!" << endl;
@@ -77,7 +77,7 @@ int main()
 	common::read_matrix_binary_from_file("./data/V", V);
 	common::read_matrix_binary_from_file("./data/F", F);
 
-	saveFeature(V, F);
+	saveDijkstra(V, F);
 	
 	cout << "Total time used...." << endl;
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;

@@ -20,15 +20,18 @@ void printShape(Matrix &M, Args... rest) {
 }
 
 
-vector<string> getFiles(string cate_dir);
+vector<string> getFiles(const string &cate_dir);
 
-void calcAverage(Eigen::MatrixXd V, Eigen::Matrix3Xi F);
+void calcAverage(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
 
-void saveBinVerts(const char *filename, string &path, vector<string> files);
+void saveBinVerts(const char *filename, const string &path, const vector<string> &files);
 
-void saveBinFaces(const char *filename, string &path, vector<string> files);
+void saveBinFaces(const char *filename, const string &path, const vector<string> &files);
 
-void calcNeighbor();
+void saveNeighbor();
+
+void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
+void saveExact(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
 
 double laplacianCotanWeight(const Surface_mesh &mesh, const int i, const int j);
 

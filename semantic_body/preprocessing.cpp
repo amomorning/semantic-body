@@ -1,9 +1,11 @@
 // DataProcess.cpp : 
 //
 #include "mesh_io.h"
+#include "measure.h"
 #include "binary_io.h"
 #include "vtk.h"
 #include "tri_mesh.h"
+#include "preprocessing.h"
 #include <Eigen/Dense>
 #include <iostream>
 #include <io.h>
@@ -49,43 +51,43 @@ vector<string> getFiles(string cate_dir)
 }
 
 
+
 //Calculate the average data
-void calcAverage(Eigen::MatrixXd V, Eigen::Matrix3Xi F) {
+void calcAverage(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F) {
 	Eigen::MatrixXd newV;
 	newV = V.rowwise().mean();
 	newV.resize(3, VERTS);
-		
+
 	common::save_obj("./data/AVE.obj", newV, F);
 	//cout << "ojk";
 }
 
 
+void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
+{
+	Eigen::MatrixXd ret;
+	measure measure;
+	
+	ret.resize(measure.len(), V.cols());
 
-void saveCotWeight(Eigen::Matrix3d V, Eigen::Matrix3i F) {
-	geodesic::Mesh mesh;
-	vector<unsigned> ff;
-
-	for (int i = 0; i < F.cols(); ++i) {
-		if (i == 5014 || i == 24932) continue;
-		for (int j = 0; j < F.rows(); ++j) {
-			ff.push_back(F(j, i));
-		}
+	for (int i = 0; i < V.cols(); ++i) {
+		Eigen::MatrixXd tmp = V.col(i);
+		tmp.resize(3, VERTS);
+		measure.calcDijkstra(tmp, F);
+		measure.saveParam(ret, i);
 	}
-	vector<double> vv(V.data(), V.data() + V.rows()*V.cols());
 
-	mesh.initialize_mesh_data(vv, ff);
+	cout << ret << endl;
+	common::write_matrix_binary_to_file("./data/dijkstra", ret);
+}
 
-	cout << "Mesh initialized ! " << endl;
+void saveExact(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F)
+{
 
-	for (int i = 0; i < VERTS; ++i) {
-		for (int j = i + 1; j < VERTS; ++i) {
-
-		}
-	}
 }
 
 // Save all verts in the shape of (3|V|, N) in binary. 
-void saveBinVerts(const char *filename, string &path, vector<string> files) {
+void saveBinVerts(const char *filename, const string &path, const vector<string> &files) {
 	Eigen::MatrixXd V;
 	V.resize(VERTS * 3, files.size());
 	cout << "V.shape = " << V.rows() << " " << V.cols() << endl;
@@ -110,7 +112,7 @@ void saveBinVerts(const char *filename, string &path, vector<string> files) {
 }
 
 // Save all faces in the shape of (3, |F|) in binary
-void saveBinFaces(const char *filename, string &path, vector<string> files) {
+void saveBinFaces(const char *filename, const string &path, const vector<string> &files) {
 	Eigen::Matrix3Xd vv;
 	Eigen::Matrix3Xi ff;
 	common::read_obj(path + files[0], vv, ff);
@@ -124,7 +126,7 @@ void saveBinFaces(const char *filename, string &path, vector<string> files) {
 // The vertex in model is 0-based while it saved with 1-based
 // It means i-1 cols is the neibour of ith vertex in 1-based
 
-void calcNeighbor() {
+void saveNeighbor() {
 	string AVEobj = "./data/AVE.obj";
 	Eigen::Matrix3Xd V;
 	Eigen::Matrix3Xi F;
@@ -177,16 +179,16 @@ double laplacianCotanWeight(const Surface_mesh &mesh,
 	return 1.0;
 }
 
-void calcFeature(const Eigen::Matrix3Xd &V, 
-				 const Eigen::Matrix3Xi &F,
-					   Eigen::MatrixXd &feature) 
+void calcFeature(const Eigen::Matrix3Xd &V,
+	const Eigen::Matrix3Xi &F,
+	Eigen::MatrixXd &feature)
 {
 	Surface_mesh mesh;
 	build_mesh(V, F, mesh);
 
 	Eigen::MatrixXi N;
 	common::read_matrix_binary_from_file("./data/neighbor", N);
-	
+
 	Eigen::Matrix3Xd AVE;
 	Eigen::Matrix3Xi AVF;
 	common::read_obj("./data/AVE.obj", AVE, AVF);
@@ -204,7 +206,7 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 			for (int n = 0; n < 3; ++n) {
 				GRBLinExpr tmp = V(n, i) - V(n, k);
 				for (int m = 0; m < 3; ++m) {
-					tmp -= Var[3*n+m]*(AVE(m, i) - AVE(m, k));
+					tmp -= Var[3 * n + m] * (AVE(m, i) - AVE(m, k));
 				}
 				obj += tmp * tmp * cij;
 			}
@@ -215,7 +217,7 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 		cout << "Matrix i == " << i << endl;
 		for (int i = 0; i < 3; ++i) {
 			for (int j = 0; j < 3; ++j) {
-				cout << Var[i*3 + j].get(GRB_DoubleAttr_X) << "\t";
+				cout << Var[i * 3 + j].get(GRB_DoubleAttr_X) << "\t";
 			}
 			cout << endl;
 		}
@@ -223,8 +225,8 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 
 }
 
-void saveFeature(const Eigen::MatrixXd &V, 
-				 const Eigen::Matrix3Xi &F) 
+void saveFeature(const Eigen::MatrixXd &V,
+	const Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
 	feature.resize(9 * VERTS, V.cols());
