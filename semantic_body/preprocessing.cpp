@@ -6,7 +6,6 @@
 #include "vtk.h"
 #include "tri_mesh.h"
 #include "preprocessing.h"
-#include <Eigen/Dense>
 #include <iostream>
 #include <io.h>
 #include <direct.h>
@@ -81,6 +80,7 @@ void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 	common::write_matrix_binary_to_file("./data/dijkstra", ret);
 }
 
+// Todo
 void saveExact(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F)
 {
 
@@ -182,13 +182,56 @@ void saveNeighbor() {
 	common::write_matrix_binary_to_file("./data/neighbor", out);
 }
 
-double laplacianCotanWeight(const Surface_mesh &mesh,
-	const int i, const int j)
+void laplacianCotanWeight(const Surface_mesh &mesh,
+	Eigen::SparseMatrix<double> &cotan)	
 {
-	return 1.0;
+	Surface_mesh::Face_iterator fit;
+	auto points = mesh.get_vertex_property<Point>("v:point");
+	
+	fit = mesh.faces_begin();
+	std::vector<Eigen::Triplet<double> > tri;
+	do {
+		Surface_mesh::Vertex_around_face_circulator vf = mesh.vertices(*fit);
+		Point p[3];
+		int id[3];
+		for (int i = 0; i < 3; ++i, ++ vf) {
+			p[i] = points[*vf];
+			id[i] = (*vf).idx();
+		}
+
+		for (int i = 0; i < 3; ++i) {
+			int j = (i + 1) % 3, k = (j + 1) % 3;
+			double cot = dot(p[j] - p[i], p[k] - p[i]) / 
+				norm(cross(p[j] - p[i], p[k] - p[i]));
+
+			// too slow....4s.
+			//cotan.coeffRef(id[j], id[k]) += 0.5*cot;
+			//cotan.coeffRef(id[k], id[j]) += 0.5*cot;
+
+			// 0.1s using setFromTriplets function;
+			tri.push_back({ id[j], id[k], 0.5*cot });
+			tri.push_back({ id[k], id[j], 0.5*cot });
+		}
+
+	} while (++fit != mesh.faces_end());
+	cotan.setFromTriplets(tri.begin(), tri.end());
 }
 
+//Calculate feature representation by closed-form expression
 void calcFeature(const Eigen::Matrix3Xd &V,
+	const Eigen::Matrix3Xi &F,
+	Eigen::MatrixXd &feature)
+{
+	Surface_mesh mesh;
+	build_mesh(V, F, mesh);
+
+	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
+	laplacianCotanWeight(mesh, cotan);
+}
+
+//Deprecated
+//It's unnecessary using Gurobi
+void calcFeatureGurobi(const Eigen::Matrix3Xd &V,
 	const Eigen::Matrix3Xi &F,
 	Eigen::MatrixXd &feature)
 {
@@ -211,7 +254,7 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 		for (int j = 0; j < 11; ++j) {
 			if (N(i, j) == 0) break;
 			int k = N(i, j) - 1;
-			double cij = laplacianCotanWeight(mesh, i, k);
+			double cij = 1.0;
 			for (int n = 0; n < 3; ++n) {
 				GRBLinExpr tmp = V(n, i) - V(n, k);
 				for (int m = 0; m < 3; ++m) {

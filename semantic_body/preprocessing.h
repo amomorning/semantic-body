@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <surface_mesh/Surface_mesh.h>
 using namespace std;
 using namespace surface_mesh;
@@ -33,7 +34,7 @@ void saveNeighbor();
 void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 void saveExact(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
 
-double laplacianCotanWeight(const Surface_mesh &mesh, const int i, const int j);
+void laplacianCotanWeight(const Surface_mesh &mesh, Eigen::SparseMatrix<double> &cotan);
 
 void saveFeature(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
 
