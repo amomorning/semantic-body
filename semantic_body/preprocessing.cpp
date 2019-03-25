@@ -194,6 +194,7 @@ void laplacianCotanWeight(const Surface_mesh &mesh,
 		Surface_mesh::Vertex_around_face_circulator vf = mesh.vertices(*fit);
 		Point p[3];
 		int id[3];
+		double cot[3];
 		for (int i = 0; i < 3; ++i, ++ vf) {
 			p[i] = points[*vf];
 			id[i] = (*vf).idx();
@@ -201,7 +202,7 @@ void laplacianCotanWeight(const Surface_mesh &mesh,
 
 		for (int i = 0; i < 3; ++i) {
 			int j = (i + 1) % 3, k = (j + 1) % 3;
-			double cot = dot(p[j] - p[i], p[k] - p[i]) / 
+			cot[i] = dot(p[j] - p[i], p[k] - p[i]) / 
 				norm(cross(p[j] - p[i], p[k] - p[i]));
 
 			// too slow....4s.
@@ -209,8 +210,12 @@ void laplacianCotanWeight(const Surface_mesh &mesh,
 			//cotan.coeffRef(id[k], id[j]) += 0.5*cot;
 
 			// 0.1s using setFromTriplets function;
-			tri.push_back({ id[j], id[k], 0.5*cot });
-			tri.push_back({ id[k], id[j], 0.5*cot });
+			tri.push_back({ id[j], id[k], -0.5*cot[i] });
+			tri.push_back({ id[k], id[j], -0.5*cot[i] });
+		}
+
+		for (int i = 0; i < 3; ++i) {
+			tri.push_back({ id[i], id[i], 0.5*(cot[(i + 1) % 3], cot[(i + 2) % 3]) });
 		}
 
 	} while (++fit != mesh.faces_end());
@@ -227,6 +232,8 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 
 	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
 	laplacianCotanWeight(mesh, cotan);
+
+	
 }
 
 //Deprecated
