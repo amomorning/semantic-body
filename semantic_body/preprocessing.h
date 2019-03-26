@@ -32,13 +32,14 @@ void saveBinFaces(const char *filename, const string &path, const vector<string>
 void saveNeighbor();
 
 void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
-void saveExact(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
+void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 
 void laplacianCotanWeight(const Surface_mesh &mesh, Eigen::SparseMatrix<double> &cotan);
 
 void saveFeature(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
 
 void calcFeature(const Eigen::Matrix3Xd &V, const Eigen::Matrix3Xi &F, Eigen::MatrixXd &feature);
+void calcFeatureGurobi(const Eigen::Matrix3Xd &V, const Eigen::Matrix3Xi &F, Eigen::MatrixXd &feature);
 
 void saveVertsOffset(const Eigen::MatrixXd &V);
 

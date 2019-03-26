@@ -13,7 +13,9 @@ measure::measure() { }
 measure::~measure() { }
 
 // line to *.vtk, visualize the geodesics and check.
-void measure::writeVTK(const std::string &filename, std::vector<geodesic::SurfacePoint> &path) {
+void measure::writeVTK(const std::string &filename,
+	std::vector<geodesic::SurfacePoint> &path)
+{
 	std::vector<double> nodes;
 	std::vector<int> lines;
 	std::ofstream os(filename);
@@ -36,7 +38,8 @@ void measure::writeVTK(const std::string &filename, std::vector<geodesic::Surfac
 }
 
 
-void measure::initMesh(geodesic::Mesh &mesh, const Eigen::Matrix3Xd & V, Eigen::Matrix3Xi & F)
+void measure::initMesh(geodesic::Mesh &mesh,
+	const Eigen::Matrix3Xd & V, Eigen::Matrix3Xi & F)
 {
 	init();
 	vector<unsigned> ff;
@@ -55,7 +58,14 @@ void measure::initMesh(geodesic::Mesh &mesh, const Eigen::Matrix3Xd & V, Eigen::
 	return;
 }
 
-void measure::calcExact(const Eigen::Matrix3Xd & V, Eigen::Matrix3Xi & F)
+void measure::saveExact(const Eigen::MatrixXd & V,
+	Eigen::Matrix3Xi &F, Eigen::MatrixXd & M)
+{
+
+}
+
+void measure::calcExact(const Eigen::Matrix3Xd & V,
+	Eigen::Matrix3Xi & F)
 {
 
 	geodesic::Mesh mesh;
@@ -70,7 +80,8 @@ void measure::calcExact(const Eigen::Matrix3Xd & V, Eigen::Matrix3Xi & F)
 	printAll();
 }
 
-void measure::calcSubdivide(const Eigen::Matrix3Xd & V, Eigen::Matrix3Xi & F)
+void measure::calcSubdivide(const Eigen::Matrix3Xd & V,
+	Eigen::Matrix3Xi & F)
 {
 	geodesic::Mesh mesh;
 	initMesh(mesh, V, F);
@@ -85,7 +96,8 @@ void measure::calcSubdivide(const Eigen::Matrix3Xd & V, Eigen::Matrix3Xi & F)
 }
 
 
-void measure::calcDijkstra(const Eigen::Matrix3Xd & V, Eigen::Matrix3Xi &F)
+void measure::calcDijkstra(const Eigen::Matrix3Xd & V,
+	Eigen::Matrix3Xi &F)
 {
 	geodesic::Mesh mesh;
 	initMesh(mesh, V, F);
@@ -99,11 +111,39 @@ void measure::calcDijkstra(const Eigen::Matrix3Xd & V, Eigen::Matrix3Xi &F)
 	printAll();
 }
 
+void measure::savePath(std::ofstream &out, const std::vector<geodesic::SurfacePoint> &path)
+{
+	for (auto p : path) {
+		cout << p.type() << " - ";
+		int x, y;
+		double t;
+		if (p.type() == geodesic::VERTEX) {
+			geodesic::vertex_pointer v = static_cast<geodesic::vertex_pointer>(p.base_element());
+			x = v->id(), y = 0;
+			t = 0;
+			cout << v->id() << " 0" << " 0";
+		}
+		else if (p.type() == geodesic::EDGE) {
+			geodesic::edge_pointer e = static_cast<geodesic::edge_pointer>(p.base_element());
+			x = e->v0()->id(), y = e->v1()->id();
+			t = p.distance(e->v0()) / e->length();
+
+			cout << e->v0()->id() << " ";
+			cout << e->v1()->id() << " ";
+			cout << p.distance(e->v0()) / e->length();
+		}
+		out.write((const char*)(&x), sizeof(int));
+		out.write((const char*)(&y), sizeof(int));
+		out.write((const char*)(&t), sizeof(double));
+		cout << endl;
+	}
+}
+
 void measure::calcLength(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &mesh)
 {
 	/*******************Calculate Geodesic Length*******************/
-
 	for (int i = 0; i < M; ++i) {
+		ofstream out("./data/path/" + SemanticLable[N + i], ios::binary);
 		int s = lengthKeyPoint[i][0];
 		int t = lengthKeyPoint[i][1];
 		std::vector<geodesic::SurfacePoint> source;
@@ -119,9 +159,11 @@ void measure::calcLength(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &
 		geodesic::print_info_about_path(path);
 		length[i] = geodesic::length(path);
 
+		savePath(out, path);
 		//string name = "./checkVTK/" +to_string(i) + "_" +SemanticLable[N+i] + ".vtk";
 		//writeVTK(name, path);
 		//printInfo(N + i);
+		out.close();
 	}
 }
 
@@ -131,6 +173,7 @@ void measure::calcCircle(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &
 	/*********************Calculate Circumstance********************/
 
 	for (int i = 0; i < N; ++i) {
+		ofstream out("./data/path/" + SemanticLable[i], ios::binary);
 		for (int j = 0; j < 4; ++j) {
 			int s = circleKeyPoint[i][j];
 			int t = circleKeyPoint[i][(j + 1) % 4];
@@ -148,9 +191,11 @@ void measure::calcCircle(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &
 			geodesic::print_info_about_path(path);
 			circle[i] += geodesic::length(path);
 
+			savePath(out, path);
 			//string name = "./checkVTK/" + to_string(i) +"-" + to_string(j) + "-" + SemanticLable[i]+ ".vtk";
 			//writeVTK(name, path);
 		}
+		out.close();
 		//printInfo(i);
 	}
 }

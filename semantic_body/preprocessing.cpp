@@ -66,7 +66,7 @@ void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd ret;
 	measure measure;
-	
+
 	ret.resize(measure.len(), V.cols());
 
 	for (int i = 0; i < V.cols(); ++i) {
@@ -81,9 +81,26 @@ void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 }
 
 // Todo
-void saveExact(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F)
+void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 {
+	Eigen::MatrixXd ret;
+	measure measure;
 
+	ret.resize(measure.len(), V.cols());
+
+
+	for (int k = 0; k < measure.len(); ++k) {
+		//那么读数据事实上需要先读出数据长度。。。。又要重写了喵的！！！
+		ifstream in("./data/path/" + measure.SemanticLable[k], ios::binary);
+
+		// Todo: check difference between measured Exact and preserved calculation 
+		for (int i = 0; i < V.cols(); ++i) {
+			Eigen::MatrixXd tmp = V.col(i);
+			tmp.resize(3, VERTS);
+		}
+	}
+	//cout << ret << endl;
+	//common::write_matrix_binary_to_file("./data/exact", ret);
 }
 
 // Save all verts in the shape of (3|V|, N) in binary. 
@@ -120,7 +137,7 @@ void saveBinFaces(const char *filename, const string &path, const vector<string>
 	cout << "ok" << endl;
 }
 
-void saveVertsOffset(const Eigen::MatrixXd &V) 
+void saveVertsOffset(const Eigen::MatrixXd &V)
 {
 	Eigen::MatrixXd ret = V;
 	Eigen::VectorXd ave = V.rowwise().mean();
@@ -183,11 +200,11 @@ void saveNeighbor() {
 }
 
 void laplacianCotanWeight(const Surface_mesh &mesh,
-	Eigen::SparseMatrix<double> &cotan)	
+	Eigen::SparseMatrix<double> &cotan)
 {
 	Surface_mesh::Face_iterator fit;
 	auto points = mesh.get_vertex_property<Point>("v:point");
-	
+
 	fit = mesh.faces_begin();
 	std::vector<Eigen::Triplet<double> > tri;
 	do {
@@ -195,14 +212,14 @@ void laplacianCotanWeight(const Surface_mesh &mesh,
 		Point p[3];
 		int id[3];
 		double cot[3];
-		for (int i = 0; i < 3; ++i, ++ vf) {
+		for (int i = 0; i < 3; ++i, ++vf) {
 			p[i] = points[*vf];
 			id[i] = (*vf).idx();
 		}
 
 		for (int i = 0; i < 3; ++i) {
 			int j = (i + 1) % 3, k = (j + 1) % 3;
-			cot[i] = dot(p[j] - p[i], p[k] - p[i]) / 
+			cot[i] = dot(p[j] - p[i], p[k] - p[i]) /
 				norm(cross(p[j] - p[i], p[k] - p[i]));
 
 			// too slow....4s.
@@ -222,7 +239,9 @@ void laplacianCotanWeight(const Surface_mesh &mesh,
 	cotan.setFromTriplets(tri.begin(), tri.end());
 }
 
+
 //Calculate feature representation by closed-form expression
+//arg min \sum cij |p(m,i)-p(m,j) - T(m,i)(p(1,i)-p(1,j))|^2
 void calcFeature(const Eigen::Matrix3Xd &V,
 	const Eigen::Matrix3Xi &F,
 	Eigen::MatrixXd &feature)
@@ -233,7 +252,7 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
 	laplacianCotanWeight(mesh, cotan);
 
-	
+
 }
 
 //Deprecated
@@ -252,6 +271,9 @@ void calcFeatureGurobi(const Eigen::Matrix3Xd &V,
 	Eigen::Matrix3Xi AVF;
 	common::read_obj("./data/AVE.obj", AVE, AVF);
 
+	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
+	laplacianCotanWeight(mesh, cotan);
+	puts("ok");
 	for (int i = 0; i < VERTS; ++i) {
 		GRBEnv env = GRBEnv();
 		GRBModel model = GRBModel(env);
@@ -261,7 +283,7 @@ void calcFeatureGurobi(const Eigen::Matrix3Xd &V,
 		for (int j = 0; j < 11; ++j) {
 			if (N(i, j) == 0) break;
 			int k = N(i, j) - 1;
-			double cij = 1.0;
+			double cij = fabs(cotan.coeff(i, k));
 			for (int n = 0; n < 3; ++n) {
 				GRBLinExpr tmp = V(n, i) - V(n, k);
 				for (int m = 0; m < 3; ++m) {
@@ -292,7 +314,8 @@ void saveFeature(const Eigen::MatrixXd &V,
 	for (int i = 0; i < V.cols(); ++i) {
 		Eigen::MatrixXd tmp = V.col(i);
 		tmp.resize(3, VERTS);
-		calcFeature(tmp, F, feature);
+		//calcFeature(tmp, F, feature);
+		calcFeatureGurobi(tmp, F, feature);
 		break;
 	}
 	//common::write_matrix_binary_to_file("./data/feature", feature);

@@ -55,9 +55,9 @@ void testGurobi() {
 	{
 		GRBEnv env = GRBEnv();
 		GRBModel model = GRBModel(env);
-		
+
 		GRBQuadExpr exp = 0;
-		
+
 
 		cout << "ok" << endl;
 	}
@@ -71,12 +71,15 @@ int main()
 {
 	clock_t t = clock();
 
-	Eigen::Matrix3Xd V;
+	Eigen::MatrixXd V;
 	Eigen::Matrix3Xi F;
-	common::read_obj("./data/AVE.obj", V, F);
+	common::read_matrix_binary_from_file("./data/V", V);
+	common::read_matrix_binary_from_file("./data/F", F);
 
-	Eigen::MatrixXd dd;
-	calcFeature(V, F, dd);
+	//saveFeature(V, F);
+	//measureOne();
+
+	saveExact(V, F);
 
 	cout << "Total time used...." << endl;
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
