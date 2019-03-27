@@ -81,8 +81,7 @@ int main()
 	common::read_matrix_binary_from_file("./data/V", V);
 	common::read_matrix_binary_from_file("./data/F", F);
 
-	saveFeature(V, F);
-
+	recoverFromFeature("./data/T.txt");
 
 	cout << "Total time used...." << endl;
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;

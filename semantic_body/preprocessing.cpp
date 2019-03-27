@@ -358,6 +358,31 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 	}
 }
 
+//Generate data from new feature matrix....
+void recoverFromFeature(const char * filename) {
+	Eigen::Matrix3Xd V;
+	Eigen::Matrix3Xi F;
+	common::read_obj("../data/AVE.obj", V, F);
+
+	std::ifstream in(filename);
+	Eigen::MatrixXd feature;
+	feature.resize(1, 112500);
+	int t = 0;
+	for (int i = 0; i < 112500; ++i) {
+		in >> feature(0, i);
+	}
+	in.close();
+
+	
+
+	cout << feature;
+	puts("ok");
+	return;
+	int cnt = 0;
+	string name = "../data/augmentation/" + to_string(cnt) + ".obj";
+	common::save_obj(name.c_str(), V, F);
+}
+
 //Deprecated
 //It's unnecessary using Gurobi
 void calcFeatureGurobi(const Eigen::Matrix3Xd &V,
