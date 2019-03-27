@@ -129,7 +129,7 @@ void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 			in.read((char*)(&y), sizeof(int));
 			in.read((char*)(&t), sizeof(double));
 			path.push_back({ x, y, t });
-			cout << x << " " << y << " " << t << endl;
+			//cout << x << " " << y << " " << t << endl;
 		}
 		in.close();
 		
@@ -149,13 +149,23 @@ void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 				VV.col(cnt++) = v0 + (v1 - v0)*u.t;
 			}
 
-			string name = "./checkVTK/" + measure.SemanticLable[k] + ".vtk";
-			writeVTK(name.c_str(), VV);
-			break;
+			//string name = "./checkVTK/" + measure.SemanticLable[k] + ".vtk";
+			//writeVTK(name.c_str(), VV);
+			//break;
+
+			double res = 0;
+			for (int i = 0; i < VV.cols()-1; i += 1) {
+				res += (VV.col(i) - VV.col(i + 1)).norm();
+			}
+			ret(k, i) = res * 0.5;
 		}
 	}
-	//cout << ret << endl;
-	//common::write_matrix_binary_to_file("./data/exact", ret);
+	cout << ret.block(0, 0, 10, 10) << endl;
+	Eigen::MatrixXd dijk;
+	common::read_matrix_binary_from_file("./data/dijkstra", dijk);
+
+	cout << endl << dijk.block(0, 0, 10, 10) << endl;
+	common::write_matrix_binary_to_file("./data/exact", ret);
 }
 
 // Save all verts in the shape of (3|V|, N) in binary. 
