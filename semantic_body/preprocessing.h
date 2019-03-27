@@ -31,8 +31,6 @@ void saveBinFaces(const char *filename, const string &path, const vector<string>
 
 void saveNeighbor();
 
-void recoverFromFeature(const char * filename);
-
 void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 
