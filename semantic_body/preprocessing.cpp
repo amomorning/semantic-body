@@ -20,6 +20,12 @@
 using namespace std;
 using namespace surface_mesh;
 
+
+struct node {
+	int x, y;
+	double t;
+};
+
 // Return a vector<string> of files in input cateloge direction.
 // The files will be sorted.
 
@@ -90,9 +96,22 @@ void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 
 
 	for (int k = 0; k < measure.len(); ++k) {
-		//那么读数据事实上需要先读出数据长度。。。。又要重写了喵的！！！
+		std::vector<node> path;
 		ifstream in("./data/path/" + measure.SemanticLable[k], ios::binary);
+		int len;
+		in.read((char*)(&len), sizeof(int));
+		for (int i = 0; i < len; ++i) {
+			int x, y;
+			double t;
+			in.read((char*)(&x), sizeof(int));
+			in.read((char*)(&y), sizeof(int));
+			in.read((char*)(&t), sizeof(double));
+			path.push_back({ x, y, t });
+			//cout << x << " " << y << " " << t << endl;
+		}
 
+		
+		break;
 		// Todo: check difference between measured Exact and preserved calculation 
 		for (int i = 0; i < V.cols(); ++i) {
 			Eigen::MatrixXd tmp = V.col(i);

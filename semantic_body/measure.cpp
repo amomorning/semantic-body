@@ -58,11 +58,7 @@ void measure::initMesh(geodesic::Mesh &mesh,
 	return;
 }
 
-void measure::saveExact(const Eigen::MatrixXd & V,
-	Eigen::Matrix3Xi &F, Eigen::MatrixXd & M)
-{
 
-}
 
 void measure::calcExact(const Eigen::Matrix3Xd & V,
 	Eigen::Matrix3Xi & F)
@@ -158,6 +154,9 @@ void measure::calcLength(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &
 		algo->trace_back(target, path);
 		geodesic::print_info_about_path(path);
 		length[i] = geodesic::length(path);
+		
+		int len = path.size();
+		out.write((const char*)(&len), sizeof(int));
 
 		savePath(out, path);
 		//string name = "./checkVTK/" +to_string(i) + "_" +SemanticLable[N+i] + ".vtk";
@@ -174,6 +173,9 @@ void measure::calcCircle(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &
 
 	for (int i = 0; i < N; ++i) {
 		ofstream out("./data/path/" + SemanticLable[i], ios::binary);
+		
+		std::vector<geodesic::SurfacePoint> path[4];
+		int len = 0;
 		for (int j = 0; j < 4; ++j) {
 			int s = circleKeyPoint[i][j];
 			int t = circleKeyPoint[i][(j + 1) % 4];
@@ -186,14 +188,17 @@ void measure::calcCircle(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &
 			algo->propagate(source);
 			//algo->print_statistics();
 
-			std::vector<geodesic::SurfacePoint> path;
-			algo->trace_back(target, path);
-			geodesic::print_info_about_path(path);
-			circle[i] += geodesic::length(path);
+			algo->trace_back(target, path[j]);
+			geodesic::print_info_about_path(path[j]);
+			circle[i] += geodesic::length(path[j]);
 
-			savePath(out, path);
+			len += path[j].size();
 			//string name = "./checkVTK/" + to_string(i) +"-" + to_string(j) + "-" + SemanticLable[i]+ ".vtk";
 			//writeVTK(name, path);
+		}
+		out.write((const char*)(&len), sizeof(int));
+		for(int j = 0; j < 4; ++ j) {
+			savePath(out, path[j]);
 		}
 		out.close();
 		//printInfo(i);

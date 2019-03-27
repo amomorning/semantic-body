@@ -58,7 +58,6 @@ public:
 	void initMesh(geodesic::Mesh &mesh, const Eigen::Matrix3Xd & V, Eigen::Matrix3Xi &F);
 
 	void savePath(std::ofstream &out, const std::vector<geodesic::SurfacePoint> &path);
-	void saveExact(const Eigen::MatrixXd & V, Eigen::Matrix3Xi &F, Eigen::MatrixXd & M);
 
 	void calcExact(const Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F);
 
