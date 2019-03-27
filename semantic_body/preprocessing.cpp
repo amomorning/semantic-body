@@ -86,6 +86,28 @@ void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 	common::write_matrix_binary_to_file("./data/dijkstra", ret);
 }
 
+void writeVTK(const char * filename, Eigen::Matrix3Xd &V) {
+	std::vector<double> nodes;
+	std::vector<int> lines;
+	std::ofstream os(filename);
+
+	int n = V.cols();
+	for (int i = 0; i < n; ++i) {
+		nodes.push_back(V(0, i));
+		nodes.push_back(V(1, i));
+		nodes.push_back(V(2, i));
+		
+		if (i) {
+			lines.push_back(i - 1);
+			lines.push_back(i);
+		}
+	}
+	line2vtk(os, nodes.data(), nodes.size() / 3, lines.data(), lines.size() / 2);
+	os.close();
+	return;
+}
+
+
 // Todo
 void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 {
@@ -107,15 +129,29 @@ void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 			in.read((char*)(&y), sizeof(int));
 			in.read((char*)(&t), sizeof(double));
 			path.push_back({ x, y, t });
-			//cout << x << " " << y << " " << t << endl;
+			cout << x << " " << y << " " << t << endl;
 		}
-
+		in.close();
 		
-		break;
 		// Todo: check difference between measured Exact and preserved calculation 
+		// or just visualize it.
 		for (int i = 0; i < V.cols(); ++i) {
 			Eigen::MatrixXd tmp = V.col(i);
 			tmp.resize(3, VERTS);
+			
+			Eigen::Matrix3Xd VV;
+			VV.resize(3, path.size());
+			int cnt = 0;
+			for (auto u : path) {
+				Eigen::Vector3d v0 = tmp.col(u.x);
+				Eigen::Vector3d v1 = tmp.col(u.y);
+				
+				VV.col(cnt++) = v0 + (v1 - v0)*u.t;
+			}
+
+			string name = "./checkVTK/" + measure.SemanticLable[k] + ".vtk";
+			writeVTK(name.c_str(), VV);
+			break;
 		}
 	}
 	//cout << ret << endl;
