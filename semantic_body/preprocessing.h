@@ -38,7 +38,7 @@ void laplacianCotanWeight(const Surface_mesh &mesh, Eigen::SparseMatrix<double> 
 
 void saveFeature(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
 
-void calcFeature(const Eigen::Matrix3Xd &V, const Eigen::Matrix3Xi &F, Eigen::MatrixXd &feature);
+void calcFeature(const Eigen::Matrix3Xd &V, const Eigen::Matrix3Xi &F, const Eigen::Matrix3Xd &AVE, Eigen::MatrixXd &feature, int u);
 void calcFeatureGurobi(const Eigen::Matrix3Xd &V, const Eigen::Matrix3Xi &F, Eigen::MatrixXd &feature);
 
 void saveVertsOffset(const Eigen::MatrixXd &V);

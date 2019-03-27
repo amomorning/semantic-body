@@ -16,6 +16,7 @@
 #include <gurobi_c++.h>
 
 #define VERTS 12500
+#define EPS 1e-6
 
 using namespace std;
 using namespace surface_mesh;
@@ -107,8 +108,11 @@ void writeVTK(const char * filename, Eigen::Matrix3Xd &V) {
 	return;
 }
 
-
 // Todo
+void saveExactBruteForce(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F) {
+
+}
+
 void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd ret;
@@ -309,7 +313,8 @@ void laplacianCotanWeight(const Surface_mesh &mesh,
 //arg min \sum cij |p(m,i)-p(m,j) - T(m,i)(p(1,i)-p(1,j))|^2
 void calcFeature(const Eigen::Matrix3Xd &V,
 	const Eigen::Matrix3Xi &F,
-	Eigen::MatrixXd &feature)
+	const Eigen::Matrix3Xd &AVE,
+	Eigen::MatrixXd &feature, int u)
 {
 	Surface_mesh mesh;
 	build_mesh(V, F, mesh);
@@ -317,7 +322,40 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
 	laplacianCotanWeight(mesh, cotan);
 
+	Eigen::MatrixXi N;
+	common::read_matrix_binary_from_file("./data/neighbor", N);
+	//cout << N.rows() << " " << N.cols() << endl;
 
+	int cnt = 0;
+	for (int i = 0; i < VERTS; ++i) {
+		Eigen::Matrix3d res = Eigen::Matrix3d::Zero();
+		double co = 0;
+		for (int j = 0; j < 11; ++j) {
+			//cout << N(i, j) << endl;;
+			if (N(i, j) == 0) break;
+			int k = N(i, j) - 1;
+
+			//cout << i << " " << k << endl;
+			double cij = -cotan.coeff(i, k);
+			Eigen::Vector3d a = V.col(k) - V.col(i);
+			Eigen::Vector3d b = AVE.col(k) - AVE.col(i);
+
+			co += cij * b.norm();
+			res += a * b.transpose();
+		}
+		res /= co;
+		//cout << cnt << endl;
+		//cout << res << endl << endl;;
+
+		//todo: RS decompositon than save....
+
+		for (int j = 0; j < 3; ++j) {
+			for (int k = 0; k < 3; ++k) {
+				
+				feature(u, cnt++) = res(j, k);
+			}
+		}
+	}
 }
 
 //Deprecated
@@ -375,13 +413,18 @@ void saveFeature(const Eigen::MatrixXd &V,
 	const Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
-	feature.resize(9 * VERTS, V.cols());
+	feature.resize(V.cols(), 9 * VERTS);
+
+	Eigen::Matrix3Xd AVE;
+	Eigen::Matrix3Xi AVF;
+	common::read_obj("./data/AVE.obj", AVE, AVF);
+
 	for (int i = 0; i < V.cols(); ++i) {
+		cout << "*********************************  " << i << endl;
 		Eigen::MatrixXd tmp = V.col(i);
 		tmp.resize(3, VERTS);
-		//calcFeature(tmp, F, feature);
-		calcFeatureGurobi(tmp, F, feature);
-		break;
+		calcFeature(tmp, F, AVE, feature, i);
+		//calcFeatureGurobi(tmp, F, feature);
 	}
-	//common::write_matrix_binary_to_file("./data/feature", feature);
+	common::write_matrix_binary_to_file("./data/feature", feature);
 }

@@ -67,6 +67,11 @@ void testGurobi() {
 	}
 }
 
+void testEigen(Eigen::Vector3d &v) {
+	v = Eigen::Vector3d::Ones();
+	return;
+}
+
 int main()
 {
 	clock_t t = clock();
@@ -76,10 +81,8 @@ int main()
 	common::read_matrix_binary_from_file("./data/V", V);
 	common::read_matrix_binary_from_file("./data/F", F);
 
-	//saveFeature(V, F);
-	//measureOne();
+	saveFeature(V, F);
 
-	saveExact(V, F);
 
 	cout << "Total time used...." << endl;
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
