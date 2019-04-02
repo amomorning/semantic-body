@@ -311,16 +311,12 @@ void laplacianCotanWeight(const Surface_mesh &mesh,
 
 //Calculate feature representation by closed-form expression
 //arg min \sum cij |p(m,i)-p(m,j) - T(m,i)(p(1,i)-p(1,j))|^2
-void calcFeature(const Eigen::Matrix3Xd &V,
+void calcFeature(const Eigen::SparseMatrix<double> &cotan,
+	const Eigen::Matrix3Xd &V,
 	const Eigen::Matrix3Xi &F,
 	const Eigen::Matrix3Xd &AVE,
 	Eigen::MatrixXd &feature, int u)
 {
-	Surface_mesh mesh;
-	build_mesh(V, F, mesh);
-
-	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
-	laplacianCotanWeight(mesh, cotan);
 
 	Eigen::MatrixXi N;
 	common::read_matrix_binary_from_file("./data/neighbor", N);
@@ -340,7 +336,7 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 			Eigen::Vector3d a = V.col(k) - V.col(i);
 			Eigen::Vector3d b = AVE.col(k) - AVE.col(i);
 
-			co += cij * b.norm();
+			co += cij * b.squaredNorm();
 			res += a * b.transpose();
 		}
 		res /= co;
@@ -351,7 +347,6 @@ void calcFeature(const Eigen::Matrix3Xd &V,
 
 		for (int j = 0; j < 3; ++j) {
 			for (int k = 0; k < 3; ++k) {
-				
 				feature(u, cnt++) = res(j, k);
 			}
 		}
@@ -409,21 +404,27 @@ void calcFeatureGurobi(const Eigen::Matrix3Xd &V,
 }
 
 void saveFeature(const Eigen::MatrixXd &V,
-	const Eigen::Matrix3Xi &F)
+	 Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
 	feature.resize(V.cols(), 9 * VERTS);
 
 	Eigen::Matrix3Xd AVE;
-	Eigen::Matrix3Xi AVF;
-	common::read_obj("./data/AVE.obj", AVE, AVF);
+	common::read_obj("./data/AVE.obj", AVE, F);
+
+	Surface_mesh mesh;
+	build_mesh(AVE, F, mesh);
+
+	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
+	laplacianCotanWeight(mesh, cotan);
 
 	for (int i = 0; i < V.cols(); ++i) {
 		cout << "*********************************  " << i << endl;
 		Eigen::MatrixXd tmp = V.col(i);
 		tmp.resize(3, VERTS);
-		calcFeature(tmp, F, AVE, feature, i);
+		calcFeature(cotan, tmp, F, AVE, feature, i);
 		//calcFeatureGurobi(tmp, F, feature);
 	}
 	common::write_matrix_binary_to_file("./data/feature", feature);
+	cout << "Feature is saved!!" << endl;
 }

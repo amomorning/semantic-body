@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <Eigen/Dense>
+using namespace std;
 
 namespace  common {
 template<class Vector, class IS>
