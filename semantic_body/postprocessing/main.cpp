@@ -39,7 +39,7 @@ void laplacianCotanWeight(const Surface_mesh &mesh,
 		}
 
 		for (int i = 0; i < 3; ++i) {
-			tri.push_back({ id[i], id[i], 0.5*(cot[(i + 1) % 3], cot[(i + 2) % 3]) });
+			tri.push_back({ id[i], id[i], 0.5*(cot[(i + 1) % 3]+ cot[(i + 2) % 3]) });
 		}
 
 	} while (++fit != mesh.faces_end());
