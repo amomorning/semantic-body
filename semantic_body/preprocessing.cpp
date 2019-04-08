@@ -268,46 +268,39 @@ void saveNeighbor() {
 	common::write_matrix_binary_to_file("./data/neighbor", out);
 }
 
+
 void laplacianCotanWeight(const Surface_mesh &mesh,
 	Eigen::SparseMatrix<double> &cotan)
 {
-	Surface_mesh::Face_iterator fit;
-	auto points = mesh.get_vertex_property<Point>("v:point");
-
-	fit = mesh.faces_begin();
 	std::vector<Eigen::Triplet<double> > tri;
-	do {
-		Surface_mesh::Vertex_around_face_circulator vf = mesh.vertices(*fit);
+	for (const auto &fit : mesh.faces())
+	{
+		int i = 0;
 		Point p[3];
 		int id[3];
 		double cot[3];
-		for (int i = 0; i < 3; ++i, ++vf) {
-			p[i] = points[*vf];
-			id[i] = (*vf).idx();
+		for (const auto &vit : mesh.vertices(fit))
+		{
+			p[i] = mesh.position(vit);
+			id[i] = vit.idx();
+			++i;
 		}
 
 		for (int i = 0; i < 3; ++i) {
 			int j = (i + 1) % 3, k = (j + 1) % 3;
-			cot[i] = dot(p[j] - p[i], p[k] - p[i]) /
+			cot[i] = 0.5*dot(p[j] - p[i], p[k] - p[i]) /
 				norm(cross(p[j] - p[i], p[k] - p[i]));
 
-			// too slow....4s.
-			//cotan.coeffRef(id[j], id[k]) += 0.5*cot;
-			//cotan.coeffRef(id[k], id[j]) += 0.5*cot;
-
-			// 0.1s using setFromTriplets function;
-			tri.push_back({ id[j], id[k], -0.5*cot[i] });
-			tri.push_back({ id[k], id[j], -0.5*cot[i] });
+			tri.push_back({ id[j], id[k], cot[i] });
+			tri.push_back({ id[k], id[j], cot[i] });
 		}
 
 		for (int i = 0; i < 3; ++i) {
-			tri.push_back({ id[i], id[i], 0.5*(cot[(i + 1) % 3] + cot[(i + 2) % 3]) });
+			tri.push_back({ id[i], id[i], -(cot[(i + 1) % 3] + cot[(i + 2) % 3]) });
 		}
-
-	} while (++fit != mesh.faces_end());
+	}
 	cotan.setFromTriplets(tri.begin(), tri.end());
 }
-
 
 //Calculate feature representation by closed-form expression
 //arg min \sum cij |p(m,i)-p(m,j) - T(m,i)(p(1,i)-p(1,j))|^2
@@ -320,7 +313,6 @@ void calcFeature(const Eigen::SparseMatrix<double> &cotan,
 
 	Eigen::MatrixXi N;
 	common::read_matrix_binary_from_file("./data/neighbor", N);
-	//cout << N.rows() << " " << N.cols() << endl;
 
 	int cnt = 0;
 	for (int i = 0; i < VERTS; ++i) {
@@ -331,23 +323,19 @@ void calcFeature(const Eigen::SparseMatrix<double> &cotan,
 			if (N(i, j) == 0) break;
 			int k = N(i, j) - 1;
 
-			//cout << i << " " << k << endl;
-			double cij = -cotan.coeff(i, k);
+			//if(!i) cout << i << " " << k << endl;
+			double cij = cotan.coeff(i, k);
 			Eigen::Vector3d a = V.col(k) - V.col(i);
 			Eigen::Vector3d b = AVE.col(k) - AVE.col(i);
 
 			co += cij * b.squaredNorm();
-			res += a * b.transpose();
+			res += cij * a * b.transpose();
 		}
 		res /= co;
-		//cout << cnt << endl;
-		//cout << res << endl << endl;;
-
-		//todo: RS decompositon than save....
 
 		for (int j = 0; j < 3; ++j) {
 			for (int k = 0; k < 3; ++k) {
-				feature(u, cnt++) = res(j, k);
+				feature(u, cnt++) = res(k, j);
 			}
 		}
 	}
@@ -407,7 +395,7 @@ void saveFeature(const Eigen::MatrixXd &V,
 	 Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
-	feature.resize(V.cols(), 9 * VERTS);
+	feature.resize(10, 9 * VERTS);
 
 	Eigen::Matrix3Xd AVE;
 	common::read_obj("./data/AVE.obj", AVE, F);
@@ -418,7 +406,7 @@ void saveFeature(const Eigen::MatrixXd &V,
 	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
 	laplacianCotanWeight(mesh, cotan);
 
-	for (int i = 0; i < V.cols(); ++i) {
+	for (int i = 0; i < V.cols() && i < 10; ++i) {
 		cout << "*********************************  " << i << endl;
 		Eigen::MatrixXd tmp = V.col(i);
 		tmp.resize(3, VERTS);

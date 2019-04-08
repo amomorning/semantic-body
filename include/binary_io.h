@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 #include <Eigen/Dense>
-using namespace std;
 
 namespace  common {
 template<class Vector, class IS>
@@ -43,7 +42,7 @@ void write_matrix_binary(OS &out, const Matrix& matrix){
 template<class Matrix>
 void read_matrix_binary_from_file(const char *filename, Matrix &matrix)
 {
-    std::ifstream is(filename, ios::binary);
+    std::ifstream is(filename, std::ios::binary);
     if(is){
         read_matrix_binary(is, matrix);
     }
@@ -53,7 +52,7 @@ void read_matrix_binary_from_file(const char *filename, Matrix &matrix)
 template<class Matrix>
 void write_matrix_binary_to_file(const char *filename, const Matrix &matrix)
 {
-    std::ofstream out(filename, ios::binary);
+    std::ofstream out(filename, std::ios::binary);
     if(out){
         write_matrix_binary(out, matrix);
     }
@@ -63,7 +62,7 @@ void write_matrix_binary_to_file(const char *filename, const Matrix &matrix)
 template<class Matrix>
 void read_matrix_binary_from_file_rowbyrow(const char *filename, Matrix &matrix)
 {
-    std::ifstream is(filename, ios::binary);
+    std::ifstream is(filename, std::ios::binary);
     if(is){
         size_t rows;
         is.read((char*)(&rows), sizeof(size_t));
@@ -82,7 +81,7 @@ void read_matrix_binary_from_file_rowbyrow(const char *filename, Matrix &matrix)
 template<class Matrix>
 void write_matrix_binary_to_file_rowbyrow(const char *filename, const Matrix &matrix)
 {
-    std::ofstream out(filename, ios::binary);
+    std::ofstream out(filename, std::ios::binary);
     if(out){
         const size_t rows = matrix.cols();
         out.write((const char*)(&rows), sizeof(size_t));
@@ -100,7 +99,7 @@ void write_matrix_binary_to_file_rowbyrow(const char *filename, const Matrix &ma
 template<class STRING>
 int file_ascii2binary(const STRING &filein, const STRING &fileout)
 {
-    std::ifstream is(filein, ios::binary);
+    std::ifstream is(filein, std::ios::binary);
     if(!is)
         return 0;
     while (!is.eof()) {
