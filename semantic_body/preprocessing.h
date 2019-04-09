@@ -34,7 +34,8 @@ void saveNeighbor();
 void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 
-void laplacianCotanWeight(const Surface_mesh &mesh, Eigen::SparseMatrix<double> &cotan);
+int calc_cot_laplace(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F,
+	Eigen::SparseMatrix<double> &L);
 
 void saveFeature(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 

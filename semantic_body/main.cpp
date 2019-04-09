@@ -46,8 +46,6 @@ void measureOne() {
 	measure measure;
 	//measure.calcDijkstra(V, F);
 	measure.calcExact(V, F);
-
-
 }
 
 void testGurobi() {

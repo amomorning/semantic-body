@@ -269,149 +269,119 @@ void saveNeighbor() {
 }
 
 
-void laplacianCotanWeight(const Surface_mesh &mesh,
-	Eigen::SparseMatrix<double> &cotan)
+void calc_cot_angles(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F,
+	Eigen::Matrix3Xd &cot_angles)
 {
-	std::vector<Eigen::Triplet<double> > tri;
-	for (const auto &fit : mesh.faces())
-	{
-		int i = 0;
-		Point p[3];
-		int id[3];
-		double cot[3];
-		for (const auto &vit : mesh.vertices(fit))
-		{
-			p[i] = mesh.position(vit);
-			id[i] = vit.idx();
-			++i;
-		}
-
-		for (int i = 0; i < 3; ++i) {
-			int j = (i + 1) % 3, k = (j + 1) % 3;
-			cot[i] = 0.5*dot(p[j] - p[i], p[k] - p[i]) /
-				norm(cross(p[j] - p[i], p[k] - p[i]));
-
-			tri.push_back({ id[j], id[k], cot[i] });
-			tri.push_back({ id[k], id[j], cot[i] });
-		}
-
-		for (int i = 0; i < 3; ++i) {
-			tri.push_back({ id[i], id[i], -(cot[(i + 1) % 3] + cot[(i + 2) % 3]) });
+	cot_angles.resize(3, F.cols());
+	for (size_t j = 0; j < F.cols(); ++j) {
+		const Eigen::Vector3i &fv = F.col(j);
+		for (size_t vi = 0; vi < 3; ++vi) {
+			const Eigen::VectorXd &p0 = V.col(fv[vi]);
+			const Eigen::VectorXd &p1 = V.col(fv[(vi + 1) % 3]);
+			const Eigen::VectorXd &p2 = V.col(fv[(vi + 2) % 3]);
+			const double angle = std::acos(std::max(-1.0,
+				std::min(1.0, (p1 - p0).normalized().dot((p2 - p0).normalized()))));
+			cot_angles(vi, j) = 1.0 / std::tan(angle);
 		}
 	}
-	cotan.setFromTriplets(tri.begin(), tri.end());
 }
 
-//Calculate feature representation by closed-form expression
-//arg min \sum cij |p(m,i)-p(m,j) - T(m,i)(p(1,i)-p(1,j))|^2
-void calcFeature(const Eigen::SparseMatrix<double> &cotan,
-	const Eigen::Matrix3Xd &V,
-	const Eigen::Matrix3Xi &F,
-	const Eigen::Matrix3Xd &AVE,
-	Eigen::MatrixXd &feature, int u)
+int calc_cot_laplace(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F,
+	Eigen::SparseMatrix<double> &L)
 {
+	Eigen::Matrix3Xd cot_angles;
+	calc_cot_angles(V, F, cot_angles);
+	std::vector<Eigen::Triplet<double>> triple;
+	triple.reserve(F.cols() * 9);
+	for (size_t j = 0; j < F.cols(); ++j) {
+		const Eigen::Vector3i &fv = F.col(j);
+		const Eigen::Vector3d &ca = cot_angles.col(j);
+		for (size_t vi = 0; vi < 3; ++vi) {
+			const size_t j1 = (vi + 1) % 3;
+			const size_t j2 = (vi + 2) % 3;
+			const int fv0 = fv[vi];
+			const int fv1 = fv[j1];
+			const int fv2 = fv[j2];
+			triple.push_back(Eigen::Triplet<double>(fv0, fv0, ca[j1] + ca[j2]));
+			triple.push_back(Eigen::Triplet<double>(fv0, fv1, -ca[j2]));
+			triple.push_back(Eigen::Triplet<double>(fv0, fv2, -ca[j1]));
+		}
+	}
+	L.resize(V.cols(), V.cols());
+	L.setFromTriplets(triple.begin(), triple.end());
+	return 1;
+}
 
-	Eigen::MatrixXi N;
-	common::read_matrix_binary_from_file("./data/neighbor", N);
 
+void calcFeature(const Eigen::SparseMatrix<double> &W,
+	const Eigen::MatrixXi &N,
+	const Eigen::Matrix3Xd &V,
+	const Eigen::Matrix3Xd &Va,
+	Eigen::MatrixXd &F, int u)
+{
 	int cnt = 0;
+
 	for (int i = 0; i < VERTS; ++i) {
-		Eigen::Matrix3d res = Eigen::Matrix3d::Zero();
+		Eigen::Matrix3d T = Eigen::Matrix3d::Zero();
 		double co = 0;
+
+		for (int k = 0; k < 11; ++k) {
+			int j = N(i, k) - 1;
+			if (j < 0) continue;
+
+			double wij = W.coeff(i, j);
+
+			Eigen::Vector3d a = V.col(j) - V.col(i);
+			Eigen::Vector3d b = Va.col(j) - Va.col(i);
+
+			co += wij * b.squaredNorm();
+			T += wij * a*b.transpose();
+		}
+
+		T /= co;
+
+		double sum = 0;
 		for (int j = 0; j < 11; ++j) {
-			//cout << N(i, j) << endl;;
-			if (N(i, j) == 0) break;
 			int k = N(i, j) - 1;
+			if (k < 0 || k == i) continue;
 
 			//if(!i) cout << i << " " << k << endl;
-			double cij = cotan.coeff(i, k);
+			double cij = W.coeff(i, k);
 			Eigen::Vector3d a = V.col(k) - V.col(i);
-			Eigen::Vector3d b = AVE.col(k) - AVE.col(i);
+			Eigen::Vector3d b = Va.col(k) - Va.col(i);
 
-			co += cij * b.squaredNorm();
-			res += cij * a * b.transpose();
+			sum += cij * (a - T * b).squaredNorm();
 		}
-		res /= co;
-
+		//cout << "sum == " << sum << endl;
 		for (int j = 0; j < 3; ++j) {
 			for (int k = 0; k < 3; ++k) {
-				feature(u, cnt++) = res(k, j);
+				F(u, cnt++) = T(k, j);
 			}
 		}
 	}
 }
-//Deprecated
-//It's unnecessary using Gurobi
-void calcFeatureGurobi(const Eigen::Matrix3Xd &V,
-	const Eigen::Matrix3Xi &F,
-	Eigen::MatrixXd &feature)
-{
-	Surface_mesh mesh;
-	build_mesh(V, F, mesh);
-
-	Eigen::MatrixXi N;
-	common::read_matrix_binary_from_file("./data/neighbor", N);
-
-	Eigen::Matrix3Xd AVE;
-	Eigen::Matrix3Xi AVF;
-	common::read_obj("./data/AVE.obj", AVE, AVF);
-
-	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
-	laplacianCotanWeight(mesh, cotan);
-	puts("ok");
-	for (int i = 0; i < VERTS; ++i) {
-		GRBEnv env = GRBEnv();
-		GRBModel model = GRBModel(env);
-
-		GRBVar *Var = model.addVars(9, GRB_CONTINUOUS);
-		GRBQuadExpr obj = 0;
-		for (int j = 0; j < 11; ++j) {
-			if (N(i, j) == 0) break;
-			int k = N(i, j) - 1;
-			double cij = fabs(cotan.coeff(i, k));
-			for (int n = 0; n < 3; ++n) {
-				GRBLinExpr tmp = V(n, i) - V(n, k);
-				for (int m = 0; m < 3; ++m) {
-					tmp -= Var[3 * n + m] * (AVE(m, i) - AVE(m, k));
-				}
-				obj += tmp * tmp * cij;
-			}
-		}
-		model.setObjective(obj);
-		model.optimize();
-
-		cout << "Matrix i == " << i << endl;
-		for (int i = 0; i < 3; ++i) {
-			for (int j = 0; j < 3; ++j) {
-				cout << Var[i * 3 + j].get(GRB_DoubleAttr_X) << "\t";
-			}
-			cout << endl;
-		}
-	}
-
-}
-
 void saveFeature(const Eigen::MatrixXd &V,
 	 Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
 	feature.resize(10, 9 * VERTS);
 
-	Eigen::Matrix3Xd AVE;
-	common::read_obj("./data/AVE.obj", AVE, F);
+	Eigen::Matrix3Xd Va;
+	common::read_obj("./data/AVE.obj", Va, F);
+	Eigen::MatrixXi N;
+	common::read_matrix_binary_from_file("./data/Neighbor", N);
 
-	Surface_mesh mesh;
-	build_mesh(AVE, F, mesh);
 
-	Eigen::SparseMatrix<double> cotan(VERTS, VERTS);
-	laplacianCotanWeight(mesh, cotan);
+	Eigen::SparseMatrix<double> W(VERTS, VERTS);
+	calc_cot_laplace(Va, F, W);
 
 	for (int i = 0; i < V.cols() && i < 10; ++i) {
 		cout << "*********************************  " << i << endl;
 		Eigen::MatrixXd tmp = V.col(i);
 		tmp.resize(3, VERTS);
-		calcFeature(cotan, tmp, F, AVE, feature, i);
+		//calcFeature(W, tmp, F, Va, feature, i);
 		//calcFeatureGurobi(tmp, F, feature);
+		calcFeature(W, N, tmp, Va, feature, i);
 	}
 	common::write_matrix_binary_to_file("./data/feature", feature);
 	cout << "Feature is saved!!" << endl;
