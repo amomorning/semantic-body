@@ -315,10 +315,11 @@ int calc_cot_laplace(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F,
 
 void calcFeature(const Eigen::SparseMatrix<double> &W,
 	const Eigen::MatrixXi &N,
-	const Eigen::Matrix3Xd &V,
 	const Eigen::Matrix3Xd &Va,
+	Eigen::MatrixXd V,
 	Eigen::MatrixXd &F, int u)
 {
+	V.resize(3, VERTS);
 	int cnt = 0;
 
 	for (int i = 0; i < VERTS; ++i) {
@@ -339,20 +340,20 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 		}
 
 		T /= co;
+		//double sum = 0;
+		//for (int j = 0; j < 11; ++j) {
+		//	int k = N(i, j) - 1;
+		//	if (k < 0 || k == i) continue;
 
-		double sum = 0;
-		for (int j = 0; j < 11; ++j) {
-			int k = N(i, j) - 1;
-			if (k < 0 || k == i) continue;
+		//	//if(!i) cout << i << " " << k << endl;
+		//	double cij = W.coeff(i, k);
+		//	Eigen::Vector3d a = V.col(k) - V.col(i);
+		//	Eigen::Vector3d b = Va.col(k) - Va.col(i);
 
-			//if(!i) cout << i << " " << k << endl;
-			double cij = W.coeff(i, k);
-			Eigen::Vector3d a = V.col(k) - V.col(i);
-			Eigen::Vector3d b = Va.col(k) - Va.col(i);
-
-			sum += cij * (a - T * b).squaredNorm();
-		}
+		//	sum += cij * (a - T * b).squaredNorm();
+		//}
 		//cout << "sum == " << sum << endl;
+		if (i < 5) cout << T << endl;
 		for (int j = 0; j < 3; ++j) {
 			for (int k = 0; k < 3; ++k) {
 				F(u, cnt++) = T(k, j);
@@ -376,12 +377,7 @@ void saveFeature(const Eigen::MatrixXd &V,
 	calc_cot_laplace(Va, F, W);
 
 	for (int i = 0; i < V.cols() && i < 10; ++i) {
-		cout << "*********************************  " << i << endl;
-		Eigen::MatrixXd tmp = V.col(i);
-		tmp.resize(3, VERTS);
-		//calcFeature(W, tmp, F, Va, feature, i);
-		//calcFeatureGurobi(tmp, F, feature);
-		calcFeature(W, N, tmp, Va, feature, i);
+		calcFeature(W, N, Va, V.col(i), feature, i);
 	}
 	common::write_matrix_binary_to_file("./data/feature", feature);
 	cout << "Feature is saved!!" << endl;
