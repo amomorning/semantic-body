@@ -23,7 +23,7 @@ void printShape(Matrix &M, Args... rest) {
 
 vector<string> getFiles(const string &cate_dir);
 
-void calcAverage(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
+void calcAverage(Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
 
 void saveBinVerts(const char *filename, const string &path, const vector<string> &files);
 

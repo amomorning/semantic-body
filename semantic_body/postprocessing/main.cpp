@@ -8,6 +8,9 @@
 using namespace std;
 using namespace surface_mesh;
 
+const int wight = 1e6;
+const int idx = 0;
+
 void calc_cot_angles(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F,
 	Eigen::Matrix3Xd &cot_angles)
 {
@@ -131,7 +134,73 @@ void calcFeature(const char * filename,
 		b.block<3, 3>(i * 3, 0) *= co;
 	}
 
-	cout << b.block<20, 3>(0, 0) << endl;
+	Eigen::Matrix3d w;
+	for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+			w(i, j) = V(j, 0)*wight;
+		}
+	}
+
+	b.block<3, 3>(idx*3, 0) += w;
+
+	//cout << b.block<20, 3>(0, 0) << endl;
+	Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> solver(A.transpose()*A);
+	if (solver.info() == Eigen::Success) {
+		Eigen::MatrixXd Vout = solver.solve(A.transpose()*b).transpose();
+		common::save_obj(filename, Vout, F);
+		cout << filename << " saved !!! " << endl;
+	}
+}
+
+void calcFeatureRS(const char * filename,
+	const Eigen::SparseMatrix<double> &L,
+	const Eigen::SparseMatrix<double> &A,
+	const Eigen::Matrix3Xd &V,
+	const Eigen::Matrix3Xi &F,
+	const Eigen::MatrixXi &N,
+	Eigen::VectorXd feature)
+{
+	// fill b
+	Eigen::MatrixXd b(37500, 3);
+	for (int i = 0, t = 0; i < 12500; ++i, t = 0) {
+		Eigen::Matrix3d R, S, T;
+
+		for (int j = 0; j < 3; ++j)
+			for (int k = 0; k < 3; ++k)
+				R(j, k) = feature[i * 18 + (t++)];
+
+		for (int j = 0; j < 3; ++j)
+			for (int k = 0; k < 3; ++k)
+				S(j, k) = feature[i * 18 + (t++)];
+		//cout << t << endl;
+		T = S*R;
+		for (int j = 0; j < 3; ++j)
+			for (int k = 0; k < 3; ++k)
+				b(i * 3 + j, k) = T(j, k);
+	}
+	for (int i = 0; i < 12500; ++i) {
+		double co = 0;
+		for (int j = 0; j < 11; ++j) {
+			int k = N(i, j) - 1;
+			if (k < 0) break;
+
+			double cij = L.coeff(i, k);
+			Eigen::Vector3d u = V.col(k) - V.col(i);
+			co += cij * u.squaredNorm();
+		}
+		b.block<3, 3>(i * 3, 0) *= co;
+	}
+
+	Eigen::Matrix3d w;
+	for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+			w(i, j) = V(j, 0)*wight;
+		}
+	}
+
+	b.block<3, 3>(idx * 3, 0) += w;
+
+	//cout << b.block<20, 3>(0, 0) << endl;
 	Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> solver(A.transpose()*A);
 	if (solver.info() == Eigen::Success) {
 		Eigen::MatrixXd Vout = solver.solve(A.transpose()*b).transpose();
@@ -181,14 +250,14 @@ void calcFeature(const char * filename,
 //}
 
 //Generate data from new feature matrix....
-void recoverFromFeature(const char * filename, int total) {
+void recoverFromFeature(Eigen::MatrixXd &feature) {
 	Eigen::Matrix3Xd V;
 	Eigen::Matrix3Xi F;
 	common::read_obj("../data/AVE.obj", V, F);
 
-	Eigen::MatrixXd feature;
+	//Eigen::MatrixXd feature;
 
-	common::read_matrix_binary_from_file(filename, feature);
+	//common::read_matrix_binary_from_file(filename, feature);
 
 
 	Eigen::SparseMatrix<double> L;
@@ -216,17 +285,30 @@ void recoverFromFeature(const char * filename, int total) {
 	Eigen::SparseMatrix<double> A(37500, 12500);
 	A.setFromTriplets(tri.begin(), tri.end());
 
-	
+	for (int i = 0; i < 3; ++i) {
+		A.coeffRef(idx*3 + i, idx) += wight;
+	}
 
 	cout << "okokok" << endl;
 
-	for (int i = 0; i < total; ++i) {
-		std::string name = "../data/augmentation/" + std::to_string(i) + ".obj";
-		calcFeature(name.c_str(), L, A, V, F, N, feature.row(i));
+	for (int i = 0; i < feature.rows(); ++i) {
+		std::string name = "../data/test/" + std::to_string(i) + ".obj";
+		calcFeatureRS(name.c_str(), L, A, V, F, N, feature.row(i));
 	}
 }
 
 
+void readNewFeature(const char* filename, Eigen::MatrixXd &feature, int total) {
+	feature.resize(total, 112500);
+	std::ifstream is(filename);
+	double x; 
+	int cnt = 0;
+	while (is >> x) {
+		feature(0, cnt) = x;
+		cnt++;
+	}
+	cout << "cnt == " << cnt << endl;
+}
 
 
 int main() {
@@ -237,6 +319,11 @@ int main() {
 	//
 	//common::save_obj("../data/NEW.obj", V, F);
 	
-	recoverFromFeature("../data/feature", 10);
+	Eigen::MatrixXd feature;
+	//readNewFeature("../data/T.txt", feature, 1);
+	
+	common::read_matrix_binary_from_file("../data/featureRS", feature);
+	//cout << feature.row(0) << endl;
+	recoverFromFeature(feature);
 	getchar();
 }

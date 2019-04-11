@@ -59,11 +59,28 @@ vector<string> getFiles(const string &cate_dir)
 
 
 //Calculate the average data
-void calcAverage(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F) {
+void calcAverage(Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F) {
 	Eigen::MatrixXd newV;
+	cout << V.rows() << " " << V.cols() << endl;
 	newV = V.rowwise().mean();
-	newV.resize(3, VERTS);
+	
+	for (int i = 0; i < V.cols(); ++i) {
+		//cout << V.col(i).rows() << " " << V.col(i).cols() << endl;
+		V.col(i) -= newV;
+	}
 
+
+	Eigen::MatrixXd sum = V.rowwise().sum();
+	sum.resize(3, VERTS);
+	Eigen::MatrixXd ss = sum.colwise().sum();
+
+	cout << ss.rows() << " " << ss.cols() << endl;
+	cout << ss.minCoeff();
+	for (int i = 0; i < VERTS; ++i) {
+		if (ss(0, i) < ss.minCoeff() + 1e-13) cout << "i = " << i << endl;
+	}
+
+	newV.resize(3, VERTS);
 	common::save_obj("./data/AVE.obj", newV, F);
 	//cout << "ojk";
 }
@@ -353,10 +370,23 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 		//	sum += cij * (a - T * b).squaredNorm();
 		//}
 		//cout << "sum == " << sum << endl;
-		if (i < 5) cout << T << endl;
+		//if (i < 5) cout << T << endl;
+
+		Eigen::JacobiSVD<Eigen::MatrixXd> svd(T, Eigen::ComputeThinU | Eigen::ComputeThinV);
+		Eigen::Matrix3d U = svd.matrixU();
+		Eigen::Matrix3d V = svd.matrixV();
+		Eigen::Matrix3d R = U * V.transpose(), S = V * U.inverse()*T;
+
+
 		for (int j = 0; j < 3; ++j) {
 			for (int k = 0; k < 3; ++k) {
-				F(u, cnt++) = T(k, j);
+				F(u, cnt++) = R(k, j);
+			}
+		}
+
+		for (int j = 0; j < 3; ++j) {
+			for (int k = 0; k < 3; ++k) {
+				F(u, cnt++) = S(k, j);
 			}
 		}
 	}
@@ -365,7 +395,7 @@ void saveFeature(const Eigen::MatrixXd &V,
 	 Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
-	feature.resize(10, 9 * VERTS);
+	feature.resize(V.cols(), 18 * VERTS);
 
 	Eigen::Matrix3Xd Va;
 	common::read_obj("./data/AVE.obj", Va, F);
@@ -376,9 +406,10 @@ void saveFeature(const Eigen::MatrixXd &V,
 	Eigen::SparseMatrix<double> W(VERTS, VERTS);
 	calc_cot_laplace(Va, F, W);
 
-	for (int i = 0; i < V.cols() && i < 10; ++i) {
+	for (int i = 0; i < V.cols(); ++i) {
+		cout << "******** feature num = " << i << endl;
 		calcFeature(W, N, Va, V.col(i), feature, i);
 	}
-	common::write_matrix_binary_to_file("./data/feature", feature);
+	common::write_matrix_binary_to_file("./data/featureRS", feature);
 	cout << "Feature is saved!!" << endl;
 }
