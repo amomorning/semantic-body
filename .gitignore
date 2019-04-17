@@ -268,3 +268,7 @@ data/
 /bodyViz/bodyViz.sln
 /bodyViz/Assembly-CSharp.csproj
 /semantic_body/.vscode/settings.json
+/semantic_body/python/DNNRegressor01/32_64_128_256_128_64_D00
+/semantic_body/python/checkPoint
+/semantic_body/python/DNNRegressor/32_64_128_256_128_64_D00
+/semantic_body/python/.ipynb_checkpoints

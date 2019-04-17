@@ -299,7 +299,7 @@ void recoverFromFeature(Eigen::MatrixXd &feature) {
 
 
 void readNewFeature(const char* filename, Eigen::MatrixXd &feature, int total) {
-	feature.resize(total, 112500);
+	feature.resize(total, 18*12500);
 	std::ifstream is(filename);
 	double x; 
 	int cnt = 0;
@@ -310,20 +310,25 @@ void readNewFeature(const char* filename, Eigen::MatrixXd &feature, int total) {
 	cout << "cnt == " << cnt << endl;
 }
 
+void recoverFromVertex(const char* filename) {
+	Eigen::Matrix3Xd V;
+	Eigen::Matrix3Xi F;
+	common::read_obj("../data/AVE.obj", V, F);
+	readNewPoint(filename, V);
+	
+	common::save_obj("../data/NEW.obj", V, F);
+	cout << "New obj saved!!" << endl;
+}
+
 
 int main() {
-	//Eigen::Matrix3Xd V;
-	//Eigen::Matrix3Xi F;
-	//common::read_obj("../data/AVE.obj", V, F);
-	//readNewPoint("../data/New.txt", V);
-	//
-	//common::save_obj("../data/NEW.obj", V, F);
+	recoverFromVertex("../data/new.txt");
 	
-	Eigen::MatrixXd feature;
+	//Eigen::MatrixXd feature;
 	//readNewFeature("../data/T.txt", feature, 1);
-	
-	common::read_matrix_binary_from_file("../data/featureRS", feature);
-	//cout << feature.row(0) << endl;
-	recoverFromFeature(feature);
+	//
+	////common::read_matrix_binary_from_file("../data/featureRS", feature);
+	////cout << feature.row(0) << endl;
+	//recoverFromFeature(feature);
 	getchar();
 }
