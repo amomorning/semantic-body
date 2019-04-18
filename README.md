@@ -1,6 +1,8 @@
 ### Folder Structure
 
-![folder](.\semantic_body\images\folder.png)
+![folder](https://github.com/amomorning/semantic_body/blob/master/semantic_body/images/folder.png)
+
+
 
 ### Package required
 
