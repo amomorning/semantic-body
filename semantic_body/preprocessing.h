@@ -23,20 +23,23 @@ void printShape(Matrix &M, Args... rest) {
 
 vector<string> getFiles(const string &cate_dir);
 
-void calcAverage(Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
+void calcAverage(const char * filename, const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F);
+
+void calcDeltaVerts(const char* filename, Eigen::MatrixXd &V);
 
 void saveBinVerts(const char *filename, const string &path, const vector<string> &files);
 
 void saveBinFaces(const char *filename, const string &path, const vector<string> &files);
 
-void saveNeighbor();
+void saveNeighbor(const char *filename);
 
-void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
-void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
+void saveDijkstra(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
+void saveExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 
-void saveFeature(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
+void saveRoughExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 
-void saveVertsOffset(const Eigen::MatrixXd &V);
+void saveFeature(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
+
 
 #endif DATA_PROCESS_H_H_
 

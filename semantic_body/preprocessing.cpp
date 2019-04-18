@@ -59,34 +59,26 @@ vector<string> getFiles(const string &cate_dir)
 
 
 //Calculate the average data
-void calcAverage(Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F) {
-	Eigen::MatrixXd newV;
-	cout << V.rows() << " " << V.cols() << endl;
-	newV = V.rowwise().mean();
+void calcAverage(const char * filename, const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F) {
+	Eigen::MatrixXd newV = V.rowwise().mean();
 	
-	for (int i = 0; i < V.cols(); ++i) {
-		//cout << V.col(i).rows() << " " << V.col(i).cols() << endl;
-		V.col(i) -= newV;
-	}
-
-
-	Eigen::MatrixXd sum = V.rowwise().sum();
-	sum.resize(3, VERTS);
-	Eigen::MatrixXd ss = sum.colwise().sum();
-
-	cout << ss.rows() << " " << ss.cols() << endl;
-	cout << ss.minCoeff();
-	for (int i = 0; i < VERTS; ++i) {
-		if (ss(0, i) < ss.minCoeff() + 1e-13) cout << "i = " << i << endl;
-	}
-
 	newV.resize(3, VERTS);
-	common::save_obj("./data/AVE.obj", newV, F);
+	common::save_obj(filename, newV, F);
 	//cout << "ojk";
 }
 
+void calcDeltaVerts(const char* filename, Eigen::MatrixXd &V) 
+{
+	Eigen::MatrixXd ave = V.rowwise().mean();
 
-void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
+	for (int i = 0; i < V.cols(); ++i) {
+		V.col(i) -= ave;
+	}
+	common::write_matrix_binary_to_file(filename, V);
+}
+
+
+void saveDijkstra(const char * filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd ret;
 	measure measure;
@@ -99,9 +91,9 @@ void saveDijkstra(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 		measure.calcDijkstra(tmp, F);
 		measure.saveParam(ret, i);
 	}
-
-	cout << ret << endl;
-	common::write_matrix_binary_to_file("./data/dijkstra", ret);
+	cout << "dijkstra measurement saved" << endl;
+	cout << ret.rows() << " " << ret.cols() << endl;
+	common::write_matrix_binary_to_file(filename, ret);
 }
 
 void writeVTK(const char * filename, Eigen::Matrix3Xd &V) {
@@ -126,11 +118,25 @@ void writeVTK(const char * filename, Eigen::Matrix3Xd &V) {
 }
 
 // Todo
-void saveExactBruteForce(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F) {
+void saveExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F) {
+	Eigen::MatrixXd ret;
+	measure measure;
 
+	ret.resize(measure.len(), V.cols());
+
+	for (int i = 0; i < V.cols(); ++i) {
+		Eigen::MatrixXd tmp = V.col(i);
+		tmp.resize(3, VERTS);
+		measure.calcExact(tmp, F, false);
+		measure.saveParam(ret, i);
+	}
+
+	cout << "Exact measurement saved" << endl;
+	cout << ret.rows() << " " << ret.cols() << endl;
+	common::write_matrix_binary_to_file(filename, ret);
 }
 
-void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
+void saveRoughExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd ret;
 	measure measure;
@@ -181,12 +187,14 @@ void saveExact(const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
 			ret(k, i) = res * 0.5;
 		}
 	}
-	cout << ret.block(0, 0, 10, 10) << endl;
-	Eigen::MatrixXd dijk;
-	common::read_matrix_binary_from_file("./data/dijkstra", dijk);
+	//cout << ret.block(0, 0, 10, 10) << endl;
+	//Eigen::MatrixXd dijk;
+	//common::read_matrix_binary_from_file("./data/dijkstra", dijk);
 
-	cout << endl << dijk.block(0, 0, 10, 10) << endl;
-	common::write_matrix_binary_to_file("./data/exact", ret);
+	//cout << endl << dijk.block(0, 0, 10, 10) << endl;
+	cout << "roughExact saved" << endl;
+	cout << ret.rows() << " " << ret.cols() << endl;
+	common::write_matrix_binary_to_file(filename, ret);
 }
 
 // Save all verts in the shape of (3|V|, N) in binary. 
@@ -223,28 +231,15 @@ void saveBinFaces(const char *filename, const string &path, const vector<string>
 	cout << "ok" << endl;
 }
 
-void saveVertsOffset(const Eigen::MatrixXd &V)
-{
-	Eigen::MatrixXd ret = V;
-	Eigen::VectorXd ave = V.rowwise().mean();
-	for (int i = 0; i < ret.cols(); ++i) {
-		ret.col(i) -= ave;
-	}
-	common::write_matrix_binary_to_file("./data/Verts", ret);
-}
 
 // Save 1-based Neibourhood vertex of each vertex..
 // You should be careful about the index of vertex.
 // The vertex in model is 0-based while it saved with 1-based
 // It means i-1 cols is the neibour of ith vertex in 1-based
 
-void saveNeighbor() {
-	string AVEobj = "./data/AVE.obj";
-	Eigen::Matrix3Xd V;
-	Eigen::Matrix3Xi F;
-	common::read_obj(AVEobj, V, F);
+void saveNeighbor(const char * filename) {
 	Surface_mesh mesh;
-	build_mesh(V, F, mesh);
+	mesh.read("./data/AVE.obj");
 
 	// init out with -1
 	Eigen::MatrixXi out;
@@ -282,7 +277,7 @@ void saveNeighbor() {
 
 	cout << "(" << out.rows() << ", " << out.cols() << ")" << endl;
 	//save as binary
-	common::write_matrix_binary_to_file("./data/neighbor", out);
+	common::write_matrix_binary_to_file(filename, out);
 }
 
 
@@ -391,7 +386,8 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 		}
 	}
 }
-void saveFeature(const Eigen::MatrixXd &V,
+void saveFeature(const char* filename, 
+	const Eigen::MatrixXd &V,
 	 Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
@@ -400,7 +396,7 @@ void saveFeature(const Eigen::MatrixXd &V,
 	Eigen::Matrix3Xd Va;
 	common::read_obj("./data/AVE.obj", Va, F);
 	Eigen::MatrixXi N;
-	common::read_matrix_binary_from_file("./data/Neighbor", N);
+	common::read_matrix_binary_from_file("./data/N", N);
 
 
 	Eigen::SparseMatrix<double> W(VERTS, VERTS);
@@ -410,6 +406,6 @@ void saveFeature(const Eigen::MatrixXd &V,
 		cout << "******** feature num = " << i << endl;
 		calcFeature(W, N, Va, V.col(i), feature, i);
 	}
-	common::write_matrix_binary_to_file("./data/featureRS", feature);
+	common::write_matrix_binary_to_file(filename, feature);
 	cout << "Feature is saved!!" << endl;
 }

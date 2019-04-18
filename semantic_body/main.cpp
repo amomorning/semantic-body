@@ -8,33 +8,65 @@
 #include "preprocessing.h"
 using namespace std;
 
-void GenerateBinaryData() {
-	std::string path = "C:/Users/amomorning/dataset/SPRING_MALE/SPRING_MALE/";
-	vector<string> files = getFiles(path + "*");
+void saveBinaryVFN() {
+	std::string trainModelPath = "./dataset/train/";
+	std::string testModelPath = "./dataset/test/";
+	
+	vector<string> trainFiles = getFiles(trainModelPath + "*");
+	vector<string> testFiles = getFiles(testModelPath + "*");
 
-	//saveBinVerts(filename, path, files);
-	saveBinFaces("./data/F", path, files);
-	// with F shape (3, 12500)
-	saveBinVerts("./data/V", path, files);
-	// with V shape (37500, 1511)
+	// trainV (37500, 1400)
+	saveBinVerts("./data/train/V", trainModelPath, trainFiles);
 
-	//calcAverage();
-	Eigen::MatrixXd V;
+	// testV (37500, 111)
+	saveBinVerts("./data/test/V", testModelPath, testFiles);
+
+	// F (3, 12500)
+	saveBinFaces("./data/F", trainModelPath, trainFiles);
+
+	Eigen::MatrixXd trainV;
+	Eigen::MatrixXd testV;
 	Eigen::Matrix3Xi F;
 
-	common::read_matrix_binary_from_file("./data/V", V);
+	common::read_matrix_binary_from_file("./data/train/V", trainV);
+	common::read_matrix_binary_from_file("./data/test/V", testV);
 	common::read_matrix_binary_from_file("./data/F", F);
 	cout << F.cols() << endl;
-	calcAverage(V, F);
 
-	//calcNeighbor();
-	saveNeighbor();
-	// with neighbour shape (12500, 11)
+	//calcAverage();
+	calcAverage("./data/AVE.obj", trainV, F);
 
+	// train dV (37500, 1400)
+	calcDeltaVerts("./data/train/dV", trainV);
+
+	// test dV (37500, 111)
+	calcDeltaVerts("./data/test/dV", testV);
+
+	// N (12500, 11)
+	saveNeighbor("./data/N");
 	cout << "All is done!" << endl;
 
 }
 
+void testBinaryVFN() {
+	Eigen::MatrixXd V;
+	Eigen::MatrixXi F;
+	common::read_matrix_binary_from_file("./data/train/V", V);
+	printShape(V);
+
+	common::read_matrix_binary_from_file("./data/test/V", V);
+	printShape(V);
+
+
+	common::read_matrix_binary_from_file("./data/F", F);
+	printShape(F);
+	Eigen::MatrixXd newV = V.col(0);
+	newV.resize(3, 12500);
+	common::save_obj("./data/TEMP.obj", newV, F);
+
+	common::read_matrix_binary_from_file("./data/N", F);
+	printShape(F);
+}
 
 void measureOne() {
 
@@ -70,18 +102,42 @@ void testEigen(Eigen::Vector3d &v) {
 	return;
 }
 
+void saveBinaryMeasure() {
+	Eigen::MatrixXd trainV;
+	Eigen::MatrixXd testV;
+	Eigen::Matrix3Xi F;
+
+	common::read_matrix_binary_from_file("./data/F", F);
+	common::read_matrix_binary_from_file("./data/train/V", trainV);
+	common::read_matrix_binary_from_file("./data/test/V", testV);
+
+	//saveDijkstra("./data/test/dijkstra", testV, F);
+
+	//measure one;
+	//saveRoughExact("./data/test/roughExact", testV, F);
+
+	//saveExact("./data/test/exact", testV, F);
+}
+
+void saveBinaryFRS() {
+	Eigen::MatrixXd trainV;
+	Eigen::MatrixXd testV;
+	Eigen::Matrix3Xi F;
+
+	common::read_matrix_binary_from_file("./data/F", F);
+	common::read_matrix_binary_from_file("./data/train/V", trainV);
+	common::read_matrix_binary_from_file("./data/test/V", testV);
+
+	//saveFeature("./data/train/RS", trainV, F);
+	
+	saveFeature("./data/test/RS", testV, F);
+}
+
 int main()
 {
 	clock_t t = clock();
+	saveBinaryFRS();
 
-	Eigen::MatrixXd V;
-	Eigen::Matrix3Xi F;
-	common::read_matrix_binary_from_file("./data/V", V);
-	common::read_matrix_binary_from_file("./data/F", F);
-
-	saveFeature(V, F);
-	//calcAverage(V, F);
-	cout << "Total time used...." << endl;
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
 	getchar();
 	return 0;

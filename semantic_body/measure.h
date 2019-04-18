@@ -59,12 +59,12 @@ public:
 
 	void savePath(std::ofstream &out, const std::vector<geodesic::SurfacePoint> &path);
 
-	void calcExact(const Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F);
+	void calcExact(const Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F, bool save = true);
 
 	void calcSubdivide(const Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F);
 	void calcDijkstra(const Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F);
-	void calcLength(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &mesh);
-	void calcCircle(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &mesh);
+	void calcLength(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &mesh, bool save = false);
+	void calcCircle(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &mesh, bool save = false);
 
 	void writeVTK(const std::string &filename, std::vector<geodesic::SurfacePoint> &path);
 
