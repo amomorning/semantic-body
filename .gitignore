@@ -277,3 +277,4 @@ __pycache__/
 *.ipynb
 
 /semantic_body/data/recover/
+/semantic_body/data/test/
