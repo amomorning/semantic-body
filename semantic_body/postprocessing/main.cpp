@@ -427,7 +427,6 @@ int main() {
 	
 	Eigen::MatrixXd feature;
 	readNewFeature("../data/recover/newRS", feature, 111);
-	//
 	////common::read_matrix_binary_from_file("../data/featureRS", feature);
 	////cout << feature.row(0) << endl;
 	recoverFromFeature(feature);
