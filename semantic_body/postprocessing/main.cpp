@@ -112,6 +112,87 @@ void readNewPoint(const char * filename, Eigen::MatrixXd &V, const Eigen::Matrix
 	}
 }
 
+void saveExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F) {
+	Eigen::MatrixXd ret;
+	measure measure;
+
+	ret.resize(measure.len(), V.cols());
+
+	for (int i = 0; i < V.cols(); ++i) {
+		Eigen::MatrixXd tmp = V.col(i);
+		tmp.resize(3, VERTS);
+		measure.calcExact(tmp, F, false);
+		measure.saveParam(ret, i);
+	}
+
+	cout << "Exact measurement saved" << endl;
+	cout << ret.rows() << " " << ret.cols() << endl;
+	common::write_matrix_binary_to_file(filename, ret);
+}
+
+void saveRoughExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
+{
+	Eigen::MatrixXd ret;
+	measure measure;
+
+	ret.resize(measure.len(), V.cols());
+
+
+	for (int k = 0; k < measure.len(); ++k) {
+		std::vector<node> path;
+		ifstream in("../data/path/" + measure.SemanticLable[k], ios::binary);
+		int len;
+		in.read((char*)(&len), sizeof(int));
+		for (int i = 0; i < len; ++i) {
+			int x, y;
+			double t;
+			in.read((char*)(&x), sizeof(int));
+			in.read((char*)(&y), sizeof(int));
+			in.read((char*)(&t), sizeof(double));
+			path.push_back({ x, y, t });
+			//cout << x << " " << y << " " << t << endl;
+		}
+		in.close();
+
+		// Todo: check difference between measured Exact and preserved calculation 
+		// or just visualize it.
+		for (int i = 0; i < V.cols(); ++i) {
+			Eigen::MatrixXd tmp = V.col(i);
+			tmp.resize(3, VERTS);
+
+			Eigen::Matrix3Xd VV;
+			VV.resize(3, path.size());
+			int cnt = 0;
+			for (auto u : path) {
+				Eigen::Vector3d v0 = tmp.col(u.x);
+				Eigen::Vector3d v1 = tmp.col(u.y);
+
+				VV.col(cnt++) = v0 + (v1 - v0)*u.t;
+			}
+
+			//string name = "./checkVTK/" + measure.SemanticLable[k] + ".vtk";
+			//writeVTK(name.c_str(), VV);
+			//break;
+
+			double res = 0;
+			for (int i = 0; i < VV.cols() - 1; i += 1) {
+				res += (VV.col(i) - VV.col(i + 1)).norm();
+			}
+			ret(k, i) = res * 0.5;
+		}
+	}
+	//cout << ret.block(0, 0, 10, 10) << endl;
+	//Eigen::MatrixXd dijk;
+	//common::read_matrix_binary_from_file("./data/dijkstra", dijk);
+
+	//cout << endl << dijk.block(0, 0, 10, 10) << endl;
+	cout << "roughExact saved" << endl;
+	cout << ret.rows() << " " << ret.cols() << endl;
+	common::write_matrix_binary_to_file(filename, ret);
+}
+
+
+
 
 void calcFeature(const char * filename,
 	const Eigen::SparseMatrix<double> &L,
@@ -159,13 +240,12 @@ void calcFeature(const char * filename,
 	}
 }
 
-void calcFeatureRS(const char * filename,
-	const Eigen::SparseMatrix<double> &L,
+void calcFeatureRS(const Eigen::SparseMatrix<double> &L,
 	const Eigen::SparseMatrix<double> &A,
-	const Eigen::Matrix3Xd &V,
-	const Eigen::Matrix3Xi &F,
-	const Eigen::MatrixXi &N,
-	Eigen::VectorXd feature)
+	const Eigen::Matrix3Xd &V, const Eigen::Matrix3Xi &F,
+	const Eigen::MatrixXi &N, Eigen::VectorXd feature,
+	Eigen::MatrixXd &newV, int u
+)
 {
 	// fill b
 	Eigen::MatrixXd b(37500, 3);
@@ -211,8 +291,12 @@ void calcFeatureRS(const char * filename,
 	Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> solver(A.transpose()*A);
 	if (solver.info() == Eigen::Success) {
 		Eigen::MatrixXd Vout = solver.solve(A.transpose()*b).transpose();
-		common::save_obj(filename, Vout, F);
-		cout << filename << " saved !!! " << endl;
+		int cnt = 0;
+		for (int j = 0; j < VERTS; ++j) {
+			for (int i = 0; i < 3; ++i) {
+				newV(cnt++, u) = Vout(i, j);
+			}
+		}
 	}
 }
 
@@ -298,10 +382,20 @@ void recoverFromFeature(Eigen::MatrixXd &feature) {
 
 	cout << "okokok" << endl;
 
+	Eigen::MatrixXd newV;
+	newV.resize(3 * VERTS, feature.cols());
+
 	for (int i = 0; i < feature.cols(); ++i) {
-		std::string name = "../data/" + std::to_string(i) + ".obj";
-		calcFeatureRS(name.c_str(), L, A, V, F, N, feature.col(i));
+		calcFeatureRS(L, A, V, F, N, feature.col(i), newV, i);
 	}
+
+	
+	Eigen::MatrixXd tmp = newV.col(0);
+	tmp.resize(3, VERTS);
+	common::save_obj("../data/TEMP.obj", tmp, F);
+	cout << "New obj saved!!" << endl;
+
+	saveRoughExact("../data/recover/rs_pr_roughExact", newV, F);
 }
 
 
@@ -314,86 +408,6 @@ void readNewFeature(const char* filename, Eigen::MatrixXd &feature, int total) {
 		}
 	}
 }
-
-void saveExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F) {
-	Eigen::MatrixXd ret;
-	measure measure;
-
-	ret.resize(measure.len(), V.cols());
-
-	for (int i = 0; i < V.cols(); ++i) {
-		Eigen::MatrixXd tmp = V.col(i);
-		tmp.resize(3, VERTS);
-		measure.calcExact(tmp, F, false);
-		measure.saveParam(ret, i);
-	}
-
-	cout << "Exact measurement saved" << endl;
-	cout << ret.rows() << " " << ret.cols() << endl;
-	common::write_matrix_binary_to_file(filename, ret);
-}
-
-void saveRoughExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F)
-{
-	Eigen::MatrixXd ret;
-	measure measure;
-
-	ret.resize(measure.len(), V.cols());
-
-
-	for (int k = 0; k < measure.len(); ++k) {
-		std::vector<node> path;
-		ifstream in("../data/path/" + measure.SemanticLable[k], ios::binary);
-		int len;
-		in.read((char*)(&len), sizeof(int));
-		for (int i = 0; i < len; ++i) {
-			int x, y;
-			double t;
-			in.read((char*)(&x), sizeof(int));
-			in.read((char*)(&y), sizeof(int));
-			in.read((char*)(&t), sizeof(double));
-			path.push_back({ x, y, t });
-			//cout << x << " " << y << " " << t << endl;
-		}
-		in.close();
-
-		// Todo: check difference between measured Exact and preserved calculation 
-		// or just visualize it.
-		for (int i = 0; i < V.cols(); ++i) {
-			Eigen::MatrixXd tmp = V.col(i);
-			tmp.resize(3, VERTS);
-
-			Eigen::Matrix3Xd VV;
-			VV.resize(3, path.size());
-			int cnt = 0;
-			for (auto u : path) {
-				Eigen::Vector3d v0 = tmp.col(u.x);
-				Eigen::Vector3d v1 = tmp.col(u.y);
-
-				VV.col(cnt++) = v0 + (v1 - v0)*u.t;
-			}
-
-			//string name = "./checkVTK/" + measure.SemanticLable[k] + ".vtk";
-			//writeVTK(name.c_str(), VV);
-			//break;
-
-			double res = 0;
-			for (int i = 0; i < VV.cols() - 1; i += 1) {
-				res += (VV.col(i) - VV.col(i + 1)).norm();
-			}
-			ret(k, i) = res * 0.5;
-		}
-	}
-	//cout << ret.block(0, 0, 10, 10) << endl;
-	//Eigen::MatrixXd dijk;
-	//common::read_matrix_binary_from_file("./data/dijkstra", dijk);
-
-	//cout << endl << dijk.block(0, 0, 10, 10) << endl;
-	cout << "roughExact saved" << endl;
-	cout << ret.rows() << " " << ret.cols() << endl;
-	common::write_matrix_binary_to_file(filename, ret);
-}
-
 
 void recoverFromVertex(const char* filename) {
 	Eigen::Matrix3Xd Va;
@@ -416,7 +430,7 @@ int main() {
 	//recoverFromVertex("../data/new.txt");
 	
 	Eigen::MatrixXd feature;
-	readNewFeature("../data/T.txt", feature, 1);
+	readNewFeature("../data/newRS.txt", feature, 111);
 	//
 	////common::read_matrix_binary_from_file("../data/featureRS", feature);
 	////cout << feature.row(0) << endl;

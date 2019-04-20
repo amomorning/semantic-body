@@ -275,3 +275,5 @@ __pycache__/
 /semantic_body/export/
 /semantic_body/data/train
 *.ipynb
+
+/semantic_body/data/recover/
