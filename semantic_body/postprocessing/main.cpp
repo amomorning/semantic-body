@@ -99,17 +99,16 @@ int calc_cot_laplace(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F,
 
 void readNewPoint(const char * filename, Eigen::MatrixXd &V, const Eigen::Matrix3Xd &Va, int total) {
 	V.resize(VERTS*3, total);
-	std::ifstream is(filename);
-	for (int i = 0; i < total; ++i) {
-		int cnt = 0;
-		for (int j = 0; j < VERTS; ++j) {
-			for (int k = 0; k < 3; ++k) {
-				double x; is >> x;
-				V(cnt++, i) = Va(k, j) + x;
-			}
-		}
-		if(!i) cout << "cnt == " << cnt << endl;
+	std::ifstream is(filename, std::ios::binary);
+	is.read((char*)V.data(), VERTS * 3 * total * sizeof(Eigen::MatrixXd::Scalar));
+
+	Eigen::MatrixXd tmp = Va;
+	tmp.resize(VERTS * 3, 1);
+	
+	for (int i = 0; i < V.cols(); ++i) {
+		V.col(i) += tmp;
 	}
+	puts("ok");
 }
 
 void saveExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F) {
@@ -423,7 +422,7 @@ void recoverFromVertex(const char* filename) {
 
 
 int main() {
-	//recoverFromVertex("../data/new.txt");
+	//recoverFromVertex("../data/recover/dV_pca_rf");
 	
 	Eigen::MatrixXd feature;
 	readNewFeature("../data/recover/newRS", feature, 111);

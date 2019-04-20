@@ -6,7 +6,7 @@ if __name__ == "__main__":
     pca = joblib.load('../export/pca_36c.joblib')
 
 
-    data = np.fromfile('../data/test/exact')[2:]
+    data = np.fromfile('../data/test/roughExact')[2:]
     print(data.shape)
     data.resize(111, 26)
 
@@ -14,4 +14,4 @@ if __name__ == "__main__":
     out = np.dot(pred, pca.components_)
 
     print(out.shape)
-    np.savetxt('../data/new.txt', out, delimiter=' ')
+    out.tofile('../data/recover/dV_pca_rf')
