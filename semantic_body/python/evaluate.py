@@ -17,7 +17,7 @@ feature = ["bustline", "waistline", "hipline", "midhipline", "armhole", "head", 
 
 x = np.arange(0, cols)
 
-idx = 11
+idx = 100
 print(rsprExact[idx, :])
 plt.plot(x, rawExact[idx, :], 'b--')
 plt.plot(x, prExact[idx, :], 'r--')

@@ -392,7 +392,7 @@ void recoverFromFeature(Eigen::MatrixXd &feature) {
 	
 	Eigen::MatrixXd tmp = newV.col(0);
 	tmp.resize(3, VERTS);
-	common::save_obj("../data/TEMP.obj", tmp, F);
+	common::save_obj("../data/recover/TEMP.obj", tmp, F);
 	cout << "New obj saved!!" << endl;
 
 	saveRoughExact("../data/recover/rs_pr_roughExact", newV, F);
@@ -401,12 +401,8 @@ void recoverFromFeature(Eigen::MatrixXd &feature) {
 
 void readNewFeature(const char* filename, Eigen::MatrixXd &feature, int total) {
 	feature.resize(18*VERTS, total);
-	std::ifstream is(filename);
-	for (int j = 0; j < total; ++j) {
-		for (int i = 0; i < 18 * VERTS; ++i) {
-			is >> feature(i, j);
-		}
-	}
+	std::ifstream is(filename, std::ios::binary);
+	is.read((char*)feature.data(), 18 * VERTS*total * sizeof(Eigen::MatrixXd::Scalar));
 }
 
 void recoverFromVertex(const char* filename) {
@@ -421,7 +417,7 @@ void recoverFromVertex(const char* filename) {
 	
 	Eigen::MatrixXd tmp = V.col(0);
 	tmp.resize(3, VERTS);
-	common::save_obj("../data/TEMP.obj", tmp, F);
+	common::save_obj("../data/recover/TEMP.obj", tmp, F);
 	cout << "New obj saved!!" << endl;
 }
 
@@ -430,7 +426,7 @@ int main() {
 	//recoverFromVertex("../data/new.txt");
 	
 	Eigen::MatrixXd feature;
-	readNewFeature("../data/newRS.txt", feature, 111);
+	readNewFeature("../data/recover/newRS", feature, 111);
 	//
 	////common::read_matrix_binary_from_file("../data/featureRS", feature);
 	////cout << feature.row(0) << endl;
