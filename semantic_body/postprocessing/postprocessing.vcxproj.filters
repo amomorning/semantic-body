@@ -21,9 +21,15 @@
     <ClCompile Include="mesh_io.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="measure.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mesh_io.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="measure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

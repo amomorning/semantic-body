@@ -3,21 +3,17 @@ import numpy as np
 if __name__ == "__main__":
     print("ok")
     # load data
-    V = np.fromfile('../data/Verts')
-    D = np.fromfile('../data/dijkstra')
+    V = np.fromfile('../data/train/dV')[2:]
+    D = np.fromfile('../data/train/roughExact')[2:]
 
-    vv = V[2:]
-    vv.resize(1511, 37500)
-
-    dd = D[2:]
-    dd.resize(1511, 26)
-    print(dd)
+    V.resize(1400, 37500)
+    D.resize(1400, 26)
 
 
     #PCA 
     from sklearn.decomposition import PCA
     pca = PCA(n_components=36)
-    newvv = pca.fit_transform(vv) #(1511, 36)
+    newV = pca.fit_transform(V) #(1400, 36)
 
     #Random Forest
     from sklearn.ensemble import RandomForestRegressor
@@ -27,7 +23,7 @@ if __name__ == "__main__":
 
     param_grid = {'n_estimators': [1000]}
     model = GridSearchCV(estimator=rfr, param_grid=param_grid, n_jobs=8, cv=10)
-    model.fit(dd, newvv)
+    model.fit(D, newV)
 
     print('Random Forest Regression....')
 
@@ -39,13 +35,13 @@ if __name__ == "__main__":
 
     # Metrics 
     from sklearn import metrics
-    predvv = np.dot(model.predict(dd), pca.components_)
+    pred = np.dot(model.predict(D), pca.components_)
 
     print("MSE:")
-    print(metrics.mean_squared_error(vv, predvv))
+    print(metrics.mean_squared_error(V, pred))
 
 
     # Save model
     from sklearn.externals import joblib
-    joblib.dump(model, 'model.joblib')
-    joblib.dump(pca, 'pca.joblib')
+    joblib.dump(model, '../export/randomforest.joblib')
+    joblib.dump(pca, '../export/pca_36c.joblib')

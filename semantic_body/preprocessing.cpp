@@ -375,13 +375,13 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 
 		for (int j = 0; j < 3; ++j) {
 			for (int k = 0; k < 3; ++k) {
-				F(u, cnt++) = R(k, j);
+				F(cnt++, u) = R(k, j);
 			}
 		}
 
 		for (int j = 0; j < 3; ++j) {
 			for (int k = 0; k < 3; ++k) {
-				F(u, cnt++) = S(k, j);
+				F(cnt++, u) = S(k, j);
 			}
 		}
 	}
@@ -391,7 +391,7 @@ void saveFeature(const char* filename,
 	 Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
-	feature.resize(V.cols(), 18 * VERTS);
+	feature.resize( 18 * VERTS, V.cols());
 
 	Eigen::Matrix3Xd Va;
 	common::read_obj("./data/AVE.obj", Va, F);

@@ -3,7 +3,6 @@
 #include <geodesic/geodesic_mesh.h>
 #include <geodesic/geodesic_algorithm_base.h>
 #include <Eigen/Dense>
-using namespace std;
 class measure
 {
 private:
@@ -45,7 +44,7 @@ private:
 	double circle[N];
 
 public:
-	string SemanticLable[N + M] = {
+	std::string SemanticLable[N + M] = {
 		"bustline", "waistline", "hipline", "midhipline", "armhole",
 		"head", "collar", "arm", "wrist", "hand", "thigh", "knee", "calf", "ankle", "shoulderWidth",
 		"backWidth", "chestWidth", "breastDist", "chestHeight",
@@ -59,12 +58,12 @@ public:
 
 	void savePath(std::ofstream &out, const std::vector<geodesic::SurfacePoint> &path);
 
-	void calcExact(const Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F);
+	void calcExact(const Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F, bool save = true);
 
 	void calcSubdivide(const Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F);
 	void calcDijkstra(const Eigen::Matrix3Xd &V, Eigen::Matrix3Xi &F);
-	void calcLength(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &mesh);
-	void calcCircle(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &mesh);
+	void calcLength(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &mesh, bool save = false);
+	void calcCircle(geodesic::GeodesicAlgorithmBase *algo, geodesic::Mesh &mesh, bool save = false);
 
 	void writeVTK(const std::string &filename, std::vector<geodesic::SurfacePoint> &path);
 
@@ -80,17 +79,17 @@ public:
 
 	void printInfo(int id) {
 		if (id < N)
-			cout << SemanticLable[id] << " = " << circle[id] << endl;
+			std::cout << SemanticLable[id] << " = " << circle[id] << std::endl;
 		else
-			cout << SemanticLable[id] << " = " << length[id - N] << endl;
+			std::cout << SemanticLable[id] << " = " << length[id - N] << std::endl;
 	}
 	void printAll() {
-		cout << "Print all of the semantic lables.." << endl;
+		std::cout << "Print all of the semantic lables.." << std::endl;
 		for (int i = 0; i < N; ++i) {
-			cout << SemanticLable[i] << " = " << circle[i] << endl;
+			std::cout << SemanticLable[i] << " = " << circle[i] << std::endl;
 		}
 		for (int i = 0; i < M; ++i) {
-			cout << SemanticLable[i + N] << " = " << length[i] << endl;
+			std::cout << SemanticLable[i + N] << " = " << length[i] << std::endl;
 		}
 	}
 	int len() {
