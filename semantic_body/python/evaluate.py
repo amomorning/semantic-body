@@ -14,7 +14,7 @@ prExact.resize(rows, cols)
 rsprExact = np.fromfile('../data/recover/rs_pr_roughExact')[2:]
 rsprExact.resize(rows, cols)
 
-adExact = np.fromfile('../data/recover/trs_roughexact')[2:]
+adExact = np.fromfile('../data/recover/dV_aednn_roughexact')[2:]
 adExact.resize(rows, cols)
 
 plt.xticks(range(0, cols), ["bustline", "waistline", "hipline", "midhipline", "armhole", "head", "collar", "arm", "wrist", "hand", "thigh", "knee", "calf", "ankle", "shoulderWidth", "backWidth", "chestWidth", "breastDist", "chestHeight", "backHeight", "waistLength", "sleeveLength", "frontLength", "backLength", "crotchLength", "outseam"]

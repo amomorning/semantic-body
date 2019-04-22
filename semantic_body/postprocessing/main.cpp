@@ -249,17 +249,17 @@ void calcFeatureRS(const Eigen::SparseMatrix<double> &L,
 	// fill b
 	Eigen::MatrixXd b(37500, 3);
 	for (int i = 0, t = 0; i < 12500; ++i, t = 0) {
-		Eigen::Matrix3d R, S, T;
+		Eigen::Matrix3d Rt, St, T;
 
 		for (int j = 0; j < 3; ++j)
 			for (int k = 0; k < 3; ++k)
-				R(j, k) = feature[i * 18 + (t++)];
+				Rt(j, k) = feature[i * 18 + (t++)];
 
 		for (int j = 0; j < 3; ++j)
 			for (int k = 0; k < 3; ++k)
-				S(j, k) = feature[i * 18 + (t++)];
+				St(j, k) = feature[i * 18 + (t++)];
 		//cout << t << endl;
-		T = S*R;
+		T = St*Rt;
 		for (int j = 0; j < 3; ++j)
 			for (int k = 0; k < 3; ++k)
 				b(i * 3 + j, k) = T(j, k);
@@ -430,13 +430,42 @@ void getFeatureMeasure(const char* infile, const char* outfile) {
 	Eigen::MatrixXd feature;
 	readNewFeature(infile, feature, 111);
 
-	recoverFromFeature(outfile, feature);
+	for (int i = 0; i < feature.rows(); ++i) {
+		if (feature(i, 1) < -200 || feature(i, 1) > 200) cout << "i = " << i / 18 << endl;
+	}
+	//recoverFromFeature(outfile, feature);
+	int x[6] = { 122, 233, 2333, 1923, 2822, 5018 };
+	for (int i = 0; i < 6; ++i) {
+		Eigen::Matrix3d R, S, T;
+		int t = 0;
+		for (int j = 0; j < 3; ++j) {
+			for (int k = 0; k < 3; ++k) {
+				R(k, j) = feature(x[i] * 18 + (t++), 1);
+			}
+		}
+		for (int j = 0; j < 3; ++j) {
+			for (int k = 0; k < 3; ++k) {
+				S(k, j) = feature(x[i] * 18 + (t++), 1);
+			}
+		}
+		T = R * S;
+
+		Eigen::JacobiSVD<Eigen::MatrixXd> svd(T, Eigen::ComputeThinU | Eigen::ComputeThinV);
+		Eigen::Matrix3d U = svd.matrixU();
+		Eigen::Matrix3d V = svd.matrixV();
+		Eigen::Matrix3d Si = U.transpose()*T*V;
+		cout << "Vertex Sig #" << x[i] << ":\n";
+		cout << Si << endl << endl;
+
+		cout << "Vertex Affine #" << x[i] << ":\n";
+		cout << T << endl << endl;
+	}
 }
 
 
 int main() {
 	//	
 
-	getFeatureMeasure("../data/recover/tRS", "../data/recover/trs_roughExact");
+	getFeatureMeasure("../data/recover/newRS", "../data/recover/trs_roughExact");
 	getchar();
 }
