@@ -8,16 +8,41 @@ if __name__ == "__main__":
     D.resize(1400, 26)
 
     #PCA 
-    from sklearn.decomposition import PCA
-    pca = PCA(n_components=50)
-    RS_pca = pca.fit_transform(RS) #(1400, 50)
+    from sklearn.decomposition import TruncatedSVD
+    pca = TruncatedSVD(n_components=60)
+    newf = pca.fit_transform(RS)
 
-    # randomforest
+    # randomforest find best parameter using gridsearch
     from sklearn.ensemble import RandomForestRegressor
-    from sklearn.model_selection import GridSearchCV
 
-    rfr = RandomForestRegressor(n_jobs=8)
+    rfr0 = RandomForestRegressor(n_estimators=700, n_jobs=8, oob_score=True, random_state=10)
+    #rfr0 = RandomForestRegressor( oob_score=True, random_state=10)
+    rfr0.fit(D, newf)
 
-    param_grid = {'n_estimators': range(10, 1000, 10)}
-    model = GridSearchCV(estimator=rfr, param_grid=param_grid, n_jobs=8, cv=10)
-    model.fit(D, RS_pca)
+    # evaluate
+    from sklearn import metrics
+    predf = rfr0.predict(D)
+    pred = np.dot(predf, pca.components_)
+
+    print("MSE:")
+    print(metrics.mean_squared_error(predf, newf))
+
+    print("PCA_MSE:")
+    print(metrics.mean_squared_error(RS, pred))
+
+    # predict
+    data = np.fromfile('../data/test/roughExact')[2:]
+    print(data.shape)
+    data.resize(111, 26)
+
+    pred = rfr0.predict(data)
+    out = np.dot(pred, pca.components_)
+
+    print(out.shape)
+    # np.savetxt('../data/newRS.txt', out, delimiter=' ')
+    out.tofile('../data/recover/newRS')
+
+    # save model
+    from sklearn.externals import joblib
+    joblib.dump(rfr0, '../export/rs_randomforest.joblib')
+    joblib.dump(pca, '../export/rs_pca_60c.joblib')

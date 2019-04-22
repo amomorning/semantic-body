@@ -340,7 +340,7 @@ void calcFeatureRS(const Eigen::SparseMatrix<double> &L,
 //}
 
 //Generate data from new feature matrix....
-void recoverFromFeature(Eigen::MatrixXd &feature) {
+void recoverFromFeature(const char* filename, Eigen::MatrixXd &feature) {
 	Eigen::Matrix3Xd V;
 	Eigen::Matrix3Xi F;
 	common::read_obj("../data/AVE.obj", V, F);
@@ -394,7 +394,7 @@ void recoverFromFeature(Eigen::MatrixXd &feature) {
 	common::save_obj("../data/recover/TEMP.obj", tmp, F);
 	cout << "New obj saved!!" << endl;
 
-	saveRoughExact("../data/recover/rs_pr_roughExact", newV, F);
+	saveRoughExact(filename, newV, F);
 }
 
 
@@ -404,30 +404,39 @@ void readNewFeature(const char* filename, Eigen::MatrixXd &feature, int total) {
 	is.read((char*)feature.data(), 18 * VERTS*total * sizeof(Eigen::MatrixXd::Scalar));
 }
 
-void recoverFromVertex(const char* filename) {
+void recoverFromVertex(const char* infile, const char* outfile) {
 	Eigen::Matrix3Xd Va;
 	Eigen::Matrix3Xi F;
 	common::read_obj("../data/AVE.obj", Va, F);
 
 	Eigen::MatrixXd V;
-	readNewPoint(filename, V, Va, 111);
+	readNewPoint(infile, V, Va, 111);
 
-	saveRoughExact("../data/recover/pr_roughexact", V, F);
+	saveRoughExact(outfile, V, F);
 	
-	Eigen::MatrixXd tmp = V.col(0);
+	Eigen::MatrixXd tmp = V.col(35);
 	tmp.resize(3, VERTS);
 	common::save_obj("../data/recover/TEMP.obj", tmp, F);
 	cout << "New obj saved!!" << endl;
 }
 
 
-int main() {
-	//recoverFromVertex("../data/recover/dV_pca_rf");
-	
+void getVertexMeature(const char* infile, const char* outfile) {
+	recoverFromVertex("../data/recover/newV","../data/recover/dV_aednn_roughexact");
+
+}
+
+void getFeatureMeasure(const char* infile, const char* outfile) {
 	Eigen::MatrixXd feature;
-	readNewFeature("../data/recover/newRS", feature, 111);
-	////common::read_matrix_binary_from_file("../data/featureRS", feature);
-	////cout << feature.row(0) << endl;
-	recoverFromFeature(feature);
+	readNewFeature(infile, feature, 111);
+
+	recoverFromFeature(outfile, feature);
+}
+
+
+int main() {
+	//	
+
+	getFeatureMeasure("../data/recover/tRS", "../data/recover/trs_roughExact");
 	getchar();
 }
