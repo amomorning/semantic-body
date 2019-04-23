@@ -70,11 +70,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\amomorning\Documents\external\x64\eigen3;C:\Users\amomorning\Documents\external\x64\surface_mesh\include;C:\Users\amomorning\Documents\external\x64\gurobi801\include;C:\Users\amomorning\source\repos\semantic_body\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\amomorning\Documents\external\x64\Sophus\include;C:\Users\amomorning\Documents\external\x64\eigen3;C:\Users\amomorning\Documents\external\x64\surface_mesh\include;C:\Users\amomorning\Documents\external\x64\gurobi801\include;C:\Users\amomorning\source\repos\semantic_body\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\amomorning\Documents\external\x64\surface_mesh\lib;C:\Users\amomorning\Documents\external\x64\gurobi801\lib;C:\Users\amomorning\source\repos\semantic_body\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\amomorning\Documents\external\x64\eigen3;C:\Users\amomorning\Documents\external\x64\surface_mesh\include;C:\Users\amomorning\Documents\external\x64\gurobi801\include;C:\Users\amomorning\source\repos\semantic_body\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\amomorning\Documents\external\x64\Sophus\include;C:\Users\amomorning\Documents\external\x64\eigen3;C:\Users\amomorning\Documents\external\x64\surface_mesh\include;C:\Users\amomorning\Documents\external\x64\gurobi801\include;C:\Users\amomorning\source\repos\semantic_body\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\amomorning\Documents\external\x64\surface_mesh\lib;C:\Users\amomorning\Documents\external\x64\gurobi801\lib;C:\Users\amomorning\source\repos\semantic_body\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

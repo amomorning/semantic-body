@@ -351,7 +351,14 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 			T += wij * a*b.transpose();
 		}
 
+		if (i == 0 || i == 1923 || i == 2822 || i == 5018) {
+			cout << "this is id " << i << endl;
+			cout << "co == " << co << endl;
+			cout << "T == " << T << endl << endl;
+		}
+
 		T /= co;
+		
 		//double sum = 0;
 		//for (int j = 0; j < 11; ++j) {
 		//	int k = N(i, j) - 1;
@@ -405,7 +412,8 @@ void saveFeature(const char* filename,
 	for (int i = 0; i < V.cols(); ++i) {
 		cout << "******** feature num = " << i << endl;
 		calcFeature(W, N, Va, V.col(i), feature, i);
+		break;
 	}
-	common::write_matrix_binary_to_file(filename, feature);
+	//common::write_matrix_binary_to_file(filename, feature);
 	cout << "Feature is saved!!" << endl;
 }

@@ -128,7 +128,7 @@ void saveBinaryFRS() {
 	common::read_matrix_binary_from_file("./data/train/V", trainV);
 	common::read_matrix_binary_from_file("./data/test/V", testV);
 
-	saveFeature("./data/train/RS", trainV, F);
+	//saveFeature("./data/train/RS", trainV, F);
 	
 	saveFeature("./data/test/RS", testV, F);
 }
@@ -137,7 +137,6 @@ int main()
 {
 	clock_t t = clock();
 	saveBinaryFRS();
-
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
 	getchar();
 	return 0;
