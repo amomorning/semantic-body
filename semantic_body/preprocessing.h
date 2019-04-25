@@ -41,5 +41,15 @@ void saveRoughExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matri
 void saveFeature(const char* filename, const Eigen::MatrixXd &V, Eigen::Matrix3Xi &F);
 
 
+void saveFaceFeature(const char* filename,
+	const Eigen::MatrixXd &V,
+	Eigen::Matrix3Xi &F);
+
+void calcFeature(Eigen::MatrixXd V,
+	const Eigen::MatrixXd &Va,
+	const Eigen::Matrix3Xi &F,
+	Eigen::MatrixXd &feature, 
+	int u, double ave);
+
 #endif DATA_PROCESS_H_H_
 

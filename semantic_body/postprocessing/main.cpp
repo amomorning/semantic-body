@@ -5,11 +5,14 @@
 #include <surface_mesh/Surface_mesh.h>
 #include "measure.h"
 #include "mesh_io.h"
+#include <sophus/so3.hpp>
 
 using namespace std;
 using namespace surface_mesh;
 
 const int VERTS = 12500;
+const int FACES = 25000;
+
 const int wight = 1e6;
 const int idx = 0;
 
@@ -426,6 +429,115 @@ void getVertexMeature(const char* infile, const char* outfile) {
 
 }
 
+Eigen::VectorXd calcFaceFeature(const Eigen::SparseMatrix<double> &A, 
+	const Eigen::MatrixXd &V, Eigen::MatrixXd feature) 
+{
+	feature.resize(12, FACES);
+
+	Eigen::MatrixXd b(FACES*3, 3);
+
+	for (int i = 0; i < FACES; ++i) {
+		Eigen::Vector3d so3;
+		Eigen::Matrix3d S;
+		for (int j = 0; j < 3; ++j) so3[j] = feature(j, i);
+		for (int j = 0; j < 3; ++j) {
+			for (int k = 0; k < 3; ++k) {
+				S(k, j) = feature(j * 3 + k + 3, i);
+			}
+		}
+
+		Eigen::Matrix3d R = Sophus::SO3d::exp(so3).matrix().transpose();
+		
+
+		Eigen::MatrixXd Vt = V.col(i);
+		Vt.resize(3, 3);
+		Eigen::Matrix3d T = Vt.transpose() * S * R;
+		for (int j = 0; j < 3; ++j) {
+			for (int k = 0; k < 3; ++k) {
+				b(i * 3 + j, k) = T(j, k);
+			}
+		}
+	}
+
+	Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> solver(A.transpose()*A);
+	if (solver.info() == Eigen::Success) {
+		Eigen::MatrixXd Vout = solver.solve(A.transpose()*b).transpose();
+		Vout.conservativeResize(3 * VERTS, 1);
+		//Vout.resizeLike(3 * VERTS, 1);
+		puts("okkk");
+		return Vout;
+	}
+	return Eigen::Vector3d::Zero();
+}
+
+
+void recoverFromFaceFeature(const char* outfile, const Eigen::MatrixXd &feature) {
+
+	Eigen::MatrixXd newV(3 * VERTS, feature.cols());
+	Eigen::VectorXd Vt(FACES);
+	Eigen::MatrixXd V(9, FACES);
+	Eigen::SparseMatrix<double> A(3 * FACES, FACES + VERTS);
+
+	Eigen::Matrix3Xd Va;
+	Eigen::Matrix3Xi Fa;
+	common::read_obj("../data/AVE.obj", Va, Fa);
+
+	Surface_mesh mesh;
+	build_mesh(Va, Fa, mesh);
+
+	double ave = 0;
+	for (const auto &e : mesh.edges()) {
+		ave += mesh.edge_length(e);
+	}
+	ave /= mesh.n_edges();
+
+	std::vector<Eigen::Triplet<double>> tri;
+	Eigen::Vector3d v[4], norm;
+	int id[4];
+	for (int i = 0; i < Fa.cols(); ++i) {
+		for (int j = 0; j < 3; ++j) {
+			id[j] = Fa(j, i);
+			v[j] = Va.col(id[j]);
+		}
+		id[3] = VERTS + i;
+		norm = (v[1] - v[0]).cross(v[2] - v[0]);
+		v[3] = (v[0] + ave*norm / norm.norm());
+
+		//calc vt
+		Vt[i] = 0.5*abs((v[1] - v[0]).dot((v[2] - v[0]).cross(v[3] - v[0])));
+
+		//calc V-1
+		for (int j = 0; j < 3; ++j) {
+			Eigen::Vector3d tmp = v[j + 1] - v[0];
+			for (int k = 0; k < 3; ++k) {
+				V(j * 3 + k, i) = tmp[k];
+			}
+		}
+		
+
+		//calc A
+		for (int j = 0; j < 3; ++j) {
+			tri.push_back({ i * 3 + j, id[j + 1], sqrt(Vt[i]) });
+			tri.push_back({ i * 3 + j, id[0], -sqrt(Vt[i]) });
+		}
+	}
+	A.setFromTriplets(tri.begin(), tri.end());
+
+
+	for (int i = 0; i < feature.cols(); ++i) {
+		newV.col(i) = calcFaceFeature(A, V, feature.col(i));
+	}
+	puts("ok");
+
+	Eigen::MatrixXd tmp = newV.col(0);
+	tmp.resize(3, VERTS);
+	common::save_obj("../data/recover/TEMP.obj", tmp, Fa);
+	cout << "New obj saved!!" << endl;
+
+	
+	//saveRoughExact(outfile, newV, F);
+}
+
 void getFeatureMeasure(const char* infile, const char* outfile) {
 	Eigen::MatrixXd feature;
 	readNewFeature(infile, feature, 111);
@@ -434,38 +546,18 @@ void getFeatureMeasure(const char* infile, const char* outfile) {
 		if (feature(i, 1) < -200 || feature(i, 1) > 200) cout << "i = " << i / 18 << endl;
 	}
 	//recoverFromFeature(outfile, feature);
-	int x[6] = { 122, 233, 2333, 1923, 2822, 5018 };
-	for (int i = 0; i < 6; ++i) {
-		Eigen::Matrix3d R, S, T;
-		int t = 0;
-		for (int j = 0; j < 3; ++j) {
-			for (int k = 0; k < 3; ++k) {
-				R(k, j) = feature(x[i] * 18 + (t++), 1);
-			}
-		}
-		for (int j = 0; j < 3; ++j) {
-			for (int k = 0; k < 3; ++k) {
-				S(k, j) = feature(x[i] * 18 + (t++), 1);
-			}
-		}
-		T = R * S;
 
-		Eigen::JacobiSVD<Eigen::MatrixXd> svd(T, Eigen::ComputeThinU | Eigen::ComputeThinV);
-		Eigen::Matrix3d U = svd.matrixU();
-		Eigen::Matrix3d V = svd.matrixV();
-		Eigen::Matrix3d Si = U.transpose()*T*V;
-		cout << "Vertex Sig #" << x[i] << ":\n";
-		cout << Si << endl << endl;
-
-		cout << "Vertex Affine #" << x[i] << ":\n";
-		cout << T << endl << endl;
-	}
 }
 
 
 int main() {
 	//	
 
-	getFeatureMeasure("../data/recover/newRS", "../data/recover/trs_roughExact");
+	//getFeatureMeasure("../data/recover/newRS", "../data/recover/trs_roughExact");
+
+	Eigen::MatrixXd feature;
+	common::read_matrix_binary_from_file("../data/test/logRS", feature);
+	recoverFromFaceFeature("./xx", feature);
+
 	getchar();
 }

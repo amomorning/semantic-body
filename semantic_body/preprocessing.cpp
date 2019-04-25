@@ -12,6 +12,7 @@
 #include <surface_mesh/Surface_mesh.h>
 #include <geodesic/geodesic_algorithm_dijkstra.h>
 #include <geodesic/geodesic_algorithm_exact.h>
+#include <sophus/so3.hpp>
 
 #include <gurobi_c++.h>
 
@@ -334,6 +335,7 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 	V.resize(3, VERTS);
 	int cnt = 0;
 
+	int tot = 0;
 	for (int i = 0; i < VERTS; ++i) {
 		Eigen::Matrix3d T = Eigen::Matrix3d::Zero();
 		double co = 0;
@@ -349,12 +351,6 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 
 			co += wij * b.squaredNorm();
 			T += wij * a*b.transpose();
-		}
-
-		if (i == 0 || i == 1923 || i == 2822 || i == 5018) {
-			cout << "this is id " << i << endl;
-			cout << "co == " << co << endl;
-			cout << "T == " << T << endl << endl;
 		}
 
 		T /= co;
@@ -377,28 +373,49 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 		Eigen::JacobiSVD<Eigen::MatrixXd> svd(T, Eigen::ComputeThinU | Eigen::ComputeThinV);
 		Eigen::Matrix3d U = svd.matrixU();
 		Eigen::Matrix3d V = svd.matrixV();
-		Eigen::Matrix3d R = U * V.transpose(), S = V * U.inverse()*T;
+		Eigen::Matrix3d R = U * V.transpose(), S = V * U.transpose()*T;
 
-
-		for (int j = 0; j < 3; ++j) {
-			for (int k = 0; k < 3; ++k) {
-				F(cnt++, u) = R(k, j);
-			}
+		if (i == 0 || i == 1923 || i == 2822 || i == 5018) {
+			cout << "this is id " << i << endl;
+			cout << "co == " << co << endl;
+			cout << "T == " << T << endl;
+			cout << "R == " << R << endl;
+			cout << "S == " << S << endl;
 		}
 
-		for (int j = 0; j < 3; ++j) {
-			for (int k = 0; k < 3; ++k) {
-				F(cnt++, u) = S(k, j);
-			}
+		if (R.determinant() < 0) {
+			cout << " i == " << i << ": " << R.determinant() << endl;
+			tot++;
 		}
+
+		//try {
+		//	Sophus::SO3d SO3_R(R);
+		//	Eigen::Vector3d so3 = SO3_R.log();
+
+		//	for (int j = 0; j < 3; ++j) {
+		//		F(cnt++, u) = so3[j];
+		//	}
+		//}
+		//catch (exception e) {
+
+		//}
+
+		//for (int j = 0; j < 3; ++j) {
+		//	for (int k = 0; k < 3; ++k) {
+		//		F(cnt++, u) = S(k, j);
+		//	}
+		//}
 	}
+	cout << "tot == " << tot << endl;
 }
+
+
 void saveFeature(const char* filename, 
 	const Eigen::MatrixXd &V,
 	 Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
-	feature.resize( 18 * VERTS, V.cols());
+	feature.resize( 12 * VERTS, V.cols());
 
 	Eigen::Matrix3Xd Va;
 	common::read_obj("./data/AVE.obj", Va, F);
@@ -416,4 +433,106 @@ void saveFeature(const char* filename,
 	}
 	//common::write_matrix_binary_to_file(filename, feature);
 	cout << "Feature is saved!!" << endl;
+}
+
+
+void calcFeature(Eigen::MatrixXd V,
+	const Eigen::MatrixXd &Va,
+	const Eigen::Matrix3Xi &F,
+	Eigen::MatrixXd &feature, int u, double ave)
+{
+	V.resize(3, VERTS);
+	Eigen::Vector3d v[4], norm;
+	int tot = 0;
+	for (int i = 0; i < F.cols(); ++i) {
+
+		//cout << "ok" << endl;
+		Eigen::Matrix3d t, ta;
+		for (int j = 0; j < 3; ++j) {
+			v[j] = V.col(F(j, i));
+		}
+		norm = (v[1] - v[0]).cross(v[2] - v[0]);
+		v[3] = (v[0] + ave*norm / norm.norm());
+		
+		for (int j = 0; j < 3; ++j) {
+			t.col(j) = v[j + 1] - v[0];
+		}
+
+		for (int j = 0; j < 3; ++j) {
+			v[j] = Va.col(F(j, i));
+		}
+		norm = (v[1] - v[0]).cross(v[2] - v[0]);
+		v[3] =  (v[0] + ave*norm / norm.norm());
+		
+		for (int j = 0; j < 3; ++j) {
+			ta.col(j) = v[j + 1] - v[0];
+		}
+
+		Eigen::Matrix3d T = t * ta.inverse();
+		//cout << "T == " << T.determinant() << endl;
+		//cout << T << endl;
+
+		Eigen::JacobiSVD<Eigen::MatrixXd> svd(T, Eigen::ComputeThinU | Eigen::ComputeThinV);
+		Eigen::Matrix3d U = svd.matrixU();
+		Eigen::Matrix3d V = svd.matrixV();
+		Eigen::Matrix3d R = U * V.transpose(), S = V * U.transpose()*T;
+
+		Sophus::SO3d SO3_R(R);
+
+		Eigen::Vector3d so3 = SO3_R.log();
+		for (int j = 0; j < 3; ++j) {
+			feature(tot++, u) = so3[j];
+		}
+
+		for (int j = 0; j < 3; ++j) {
+			for (int k = 0; k < 3; ++k) {
+				feature(tot++, u) = S(j, k);
+			}
+		}
+		//cout << "R == " << R.determinant() << endl;
+		//cout << R << endl;
+		//cout << "S == " << endl;
+		//cout << S << endl;
+	}
+	cout << "tot == " << tot << endl;
+}
+
+void saveFaceFeature(const char* filename,
+	const Eigen::MatrixXd &V,
+	Eigen::Matrix3Xi &F)
+{
+	Eigen::MatrixXd feature;
+	feature.resize(24 * VERTS, V.cols());
+
+	//Eigen::Matrix<int, 3, 2*VERTS> N;
+	//cout << "N rc = " << N.rows() << " " << N.cols() << endl;
+
+	Eigen::Matrix3Xd Va;
+	common::read_obj("./data/AVE.obj", Va, F);
+
+	Surface_mesh mesh;
+	build_mesh(Va, F, mesh);
+
+	double ave = 0;
+	for (const auto & e : mesh.edges()) {
+		ave += mesh.edge_length(e);
+	}
+	ave /= mesh.n_edges();
+
+	//for (const auto &fa : mesh.faces()) {
+	//	int cnt = 0;
+	//	for (const auto &he : mesh.halfedges(fa)) {
+	//		Surface_mesh::Halfedge x = mesh.opposite_halfedge(he);
+	//		N(mesh.face(x).idx(), cnt++) = fa.idx();
+	//		N(fa.idx(), cnt++);
+	//	}
+	//}
+
+	for (int i = 0; i < V.cols(); ++i) {
+		cout << "feature num = " << i << endl;
+		calcFeature(V.col(i), Va, F, feature, i, ave);
+	}
+
+	common::write_matrix_binary_to_file(filename, feature);
+
 }

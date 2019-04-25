@@ -2,7 +2,7 @@
 #include <binary_io.h>
 #include <time.h>
 #include <gurobi_c++.h>
-
+#include <sophus/so3.hpp>
 #include "mesh_io.h"
 #include "measure.h"
 #include "preprocessing.h"
@@ -130,13 +130,30 @@ void saveBinaryFRS() {
 
 	//saveFeature("./data/train/RS", trainV, F);
 	
-	saveFeature("./data/test/RS", testV, F);
+	saveFaceFeature("./data/test/logRS", testV, F);
+	cout << "saved!!!" << endl;
+}
+
+void testSophus() {
+	Eigen::Matrix3d R = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d(0, 0, 1)).toRotationMatrix();
+
+	Sophus::SO3d SO3_R(R);
+	cout << R << endl << endl;
+
+	Eigen::Vector3d so3 = SO3_R.log();
+	cout << so3.transpose() << endl;
+	cout << Sophus::SO3d::hat(so3).transpose() << endl;
+
+	Sophus::SO3d tSO3_R = Sophus::SO3d::exp(so3);
+	cout << tSO3_R.matrix() << endl;
 }
 
 int main()
 {
 	clock_t t = clock();
 	saveBinaryFRS();
+
+	
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
 	getchar();
 	return 0;
