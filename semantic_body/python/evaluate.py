@@ -7,15 +7,20 @@ cols = 26
 
 rawExact = np.fromfile('../data/test/roughExact')[2:]
 rawExact.resize(rows, cols)
+print(rawExact)
 
 prExact = np.fromfile('../data/recover/pr_roughexact')[2:]
 prExact.resize(rows, cols)
 
-rsprExact = np.fromfile('../data/recover/rs_pr_roughExact')[2:]
+rsprExact = np.fromfile('../data/recover/logRS_roughExact')[2:]
 rsprExact.resize(rows, cols)
+print(rsprExact)
 
 adExact = np.fromfile('../data/recover/dV_aednn_roughexact')[2:]
 adExact.resize(rows, cols)
+
+rsadExact = np.fromfile('../data/recover/logRS_aednn_roughexact')[2:]
+rsadExact.resize(rows, cols)
 
 plt.xticks(range(0, cols), ["bustline", "waistline", "hipline", "midhipline", "armhole", "head", "collar", "arm", "wrist", "hand", "thigh", "knee", "calf", "ankle", "shoulderWidth", "backWidth", "chestWidth", "breastDist", "chestHeight", "backHeight", "waistLength", "sleeveLength", "frontLength", "backLength", "crotchLength", "outseam"]
             ,rotation=90)
@@ -34,6 +39,7 @@ print(MSE(prExact[:, 0], rawExact[:, 0], 0))
 y_dv = MSE(prExact, rawExact, 0)
 y_rs = MSE(rsprExact, rawExact, 0)
 y_dv_ad = MSE(adExact, rawExact, 0)
+y_rs_ad = MSE(rsadExact, rawExact, 0)
 print(y_dv.shape)
 
 print("MSE dv:")
@@ -43,11 +49,13 @@ print("MSE RS:")
 print(metrics.mean_squared_error(rsprExact, rawExact))
 print(MSE(rsprExact, rawExact, (0, 1)))
 print(MSE(adExact, rawExact, (0, 1)))
+print(MSE(rsadExact, rawExact, (0, 1)))
 x = np.arange(0, cols)
 
 plt.plot(x, y_dv, label='dV_pca_rf', color='b')
 plt.plot(x, y_rs, label='RS_pca_rf', color='g')
 plt.plot(x, y_dv_ad, label='dV_ae_dnn', color='c')
+plt.plot(x, y_rs_ad, label='RS_ae_dnn', color='m')
 plt.ylabel('error')
 # idx = 40
 # print(rsprExact[idx, :])

@@ -534,6 +534,7 @@ void saveFaceFeature(const char* filename,
 		calcFeature(V.col(i), Va, F, feature, i, ave);
 	}
 
+	cout << feature.rows() << " " << feature.cols() << endl;
 	common::write_matrix_binary_to_file(filename, feature);
 
 }

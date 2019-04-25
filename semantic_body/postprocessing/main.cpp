@@ -407,6 +407,12 @@ void readNewFeature(const char* filename, Eigen::MatrixXd &feature, int total) {
 	is.read((char*)feature.data(), 18 * VERTS*total * sizeof(Eigen::MatrixXd::Scalar));
 }
 
+void readNewFaceFeature(const char* filename, Eigen::MatrixXd &feature, int total) {
+	feature.resize(12*2 * VERTS, total);
+	std::ifstream is(filename, std::ios::binary);
+	is.read((char*)feature.data(), 24 * VERTS*total * sizeof(Eigen::MatrixXd::Scalar));
+}
+
 void recoverFromVertex(const char* infile, const char* outfile) {
 	Eigen::Matrix3Xd Va;
 	Eigen::Matrix3Xi F;
@@ -532,7 +538,6 @@ void recoverFromFaceFeature(const char* outfile, const Eigen::MatrixXd &feature)
 
 	for (int i = 0; i < feature.cols(); ++i) {
 		newV.col(i) = calcFaceFeature(A, V, feature.col(i));
-		break;
 	}
 	puts("ok");
 
@@ -542,7 +547,7 @@ void recoverFromFaceFeature(const char* outfile, const Eigen::MatrixXd &feature)
 	cout << "New obj saved!!" << endl;
 
 	
-	//saveRoughExact(outfile, newV, F);
+	saveRoughExact(outfile, newV, Fa);
 }
 
 void getFeatureMeasure(const char* infile, const char* outfile) {
@@ -556,15 +561,20 @@ void getFeatureMeasure(const char* infile, const char* outfile) {
 
 }
 
+void getFaceFeatureMeature(const char* infile, const char* outfile) {
+	Eigen::MatrixXd feature;
+	readNewFaceFeature(infile, feature, 111);
+
+	recoverFromFaceFeature(outfile, feature);
+}
+
 
 int main() {
-	//	
 
-	//getFeatureMeasure("../data/recover/newRS", "../data/recover/trs_roughExact");
-
-	Eigen::MatrixXd feature;
-	common::read_matrix_binary_from_file("../data/test/logRS", feature);
-	recoverFromFaceFeature("./xx", feature);
+	getFaceFeatureMeature("../data/recover/newlogRS", "../data/recover/logRS_aednn_roughExact");
+	//Eigen::MatrixXd feature;
+	//common::read_matrix_binary_from_file("../data/test/logRS", feature);
+	//recoverFromFaceFeature("../data/recover/logRS_aednn_roughExact", feature);
 
 	getchar();
 }

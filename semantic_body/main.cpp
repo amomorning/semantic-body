@@ -128,7 +128,8 @@ void saveBinaryFRS() {
 	common::read_matrix_binary_from_file("./data/train/V", trainV);
 	common::read_matrix_binary_from_file("./data/test/V", testV);
 
-	//saveFeature("./data/train/RS", trainV, F);
+	//saveFaceFeature("./data/train/logRS", trainV, F);
+	//cout << F.rows() << " " << F.cols() << endl;
 	
 	saveFaceFeature("./data/test/logRS", testV, F);
 	cout << "saved!!!" << endl;
