@@ -14,7 +14,6 @@
 #include <geodesic/geodesic_algorithm_exact.h>
 #include <sophus/so3.hpp>
 
-#include <gurobi_c++.h>
 
 #define VERTS 12500
 #define EPS 1e-6
@@ -335,78 +334,35 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 	V.resize(3, VERTS);
 	int cnt = 0;
 
-	int tot = 0;
-	for (int i = 0; i < VERTS; ++i) {
-		Eigen::Matrix3d T = Eigen::Matrix3d::Zero();
-		double co = 0;
-
-		for (int k = 0; k < 11; ++k) {
-			int j = N(i, k) - 1;
-			if (j < 0) continue;
-
-			double wij = W.coeff(i, j);
+	for (int k = 0; k < W.outerSize(); ++k) {
+		Eigen::Matrix3d A = Eigen::Matrix3d::Zero();
+		Eigen::Matrix3d B = Eigen::Matrix3d::Zero();
+		for (Eigen::SparseMatrix<double>::InnerIterator it(W, k); it; ++it) {
+			int j = it.row(), i = it.col();
+			if (i == j) continue;
 
 			Eigen::Vector3d a = V.col(j) - V.col(i);
 			Eigen::Vector3d b = Va.col(j) - Va.col(i);
+			
+			double wij = it.value();
 
-			co += wij * b.squaredNorm();
-			T += wij * a*b.transpose();
+			A += wij * b*b.transpose();
+			B += wij * a*b.transpose();
 		}
 
-		T /= co;
-		
-		//double sum = 0;
-		//for (int j = 0; j < 11; ++j) {
-		//	int k = N(i, j) - 1;
-		//	if (k < 0 || k == i) continue;
-
-		//	//if(!i) cout << i << " " << k << endl;
-		//	double cij = W.coeff(i, k);
-		//	Eigen::Vector3d a = V.col(k) - V.col(i);
-		//	Eigen::Vector3d b = Va.col(k) - Va.col(i);
-
-		//	sum += cij * (a - T * b).squaredNorm();
-		//}
-		//cout << "sum == " << sum << endl;
-		//if (i < 5) cout << T << endl;
+		Eigen::JacobiSVD<Eigen::MatrixXd> svd0(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+		Eigen::Matrix3d T = svd0.solve(B);
 
 		Eigen::JacobiSVD<Eigen::MatrixXd> svd(T, Eigen::ComputeThinU | Eigen::ComputeThinV);
 		Eigen::Matrix3d U = svd.matrixU();
 		Eigen::Matrix3d V = svd.matrixV();
 		Eigen::Matrix3d R = U * V.transpose(), S = V * U.transpose()*T;
 
-		if (i == 0 || i == 1923 || i == 2822 || i == 5018) {
-			cout << "this is id " << i << endl;
-			cout << "co == " << co << endl;
-			cout << "T == " << T << endl;
-			cout << "R == " << R << endl;
-			cout << "S == " << S << endl;
-		}
-
 		if (R.determinant() < 0) {
-			cout << " i == " << i << ": " << R.determinant() << endl;
-			tot++;
+			cout << " i == " << k << ": " << R.determinant() << endl;
 		}
-
-		//try {
-		//	Sophus::SO3d SO3_R(R);
-		//	Eigen::Vector3d so3 = SO3_R.log();
-
-		//	for (int j = 0; j < 3; ++j) {
-		//		F(cnt++, u) = so3[j];
-		//	}
-		//}
-		//catch (exception e) {
-
-		//}
-
-		//for (int j = 0; j < 3; ++j) {
-		//	for (int k = 0; k < 3; ++k) {
-		//		F(cnt++, u) = S(k, j);
-		//	}
-		//}
 	}
-	cout << "tot == " << tot << endl;
+
 }
 
 

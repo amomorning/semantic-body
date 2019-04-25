@@ -131,7 +131,7 @@ void saveBinaryFRS() {
 	//saveFaceFeature("./data/train/logRS", trainV, F);
 	//cout << F.rows() << " " << F.cols() << endl;
 	
-	saveFaceFeature("./data/test/logRS", testV, F);
+	saveFeature("./data/test/RS", testV, F);
 	cout << "saved!!!" << endl;
 }
 
