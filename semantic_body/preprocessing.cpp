@@ -444,6 +444,7 @@ void calcFeature(Eigen::MatrixXd V,
 	V.resize(3, VERTS);
 	Eigen::Vector3d v[4], norm;
 	int tot = 0;
+	cout << "ave == " << ave << endl;
 	for (int i = 0; i < F.cols(); ++i) {
 
 		//cout << "ok" << endl;
@@ -452,7 +453,7 @@ void calcFeature(Eigen::MatrixXd V,
 			v[j] = V.col(F(j, i));
 		}
 		norm = (v[1] - v[0]).cross(v[2] - v[0]);
-		v[3] = (v[0] + ave*norm / norm.norm());
+		v[3] = v[0] + norm / sqrt(norm.norm());
 		
 		for (int j = 0; j < 3; ++j) {
 			t.col(j) = v[j + 1] - v[0];
@@ -462,7 +463,7 @@ void calcFeature(Eigen::MatrixXd V,
 			v[j] = Va.col(F(j, i));
 		}
 		norm = (v[1] - v[0]).cross(v[2] - v[0]);
-		v[3] =  (v[0] + ave*norm / norm.norm());
+		v[3] =  v[0] + norm / sqrt(norm.norm());
 		
 		for (int j = 0; j < 3; ++j) {
 			ta.col(j) = v[j + 1] - v[0];

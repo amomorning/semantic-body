@@ -462,10 +462,10 @@ Eigen::VectorXd calcFaceFeature(const Eigen::SparseMatrix<double> &A,
 	Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> solver(A.transpose()*A);
 	if (solver.info() == Eigen::Success) {
 		Eigen::MatrixXd Vout = solver.solve(A.transpose()*b).transpose();
-		Vout.conservativeResize(3 * VERTS, 1);
-		//Vout.resizeLike(3 * VERTS, 1);
-		puts("okkk");
-		return Vout;
+		
+		Eigen::MatrixXd Vo = Vout.leftCols(VERTS);
+		Vo.resize(3 * VERTS, 1);
+		return Vo;
 	}
 	return Eigen::Vector3d::Zero();
 }
@@ -501,24 +501,30 @@ void recoverFromFaceFeature(const char* outfile, const Eigen::MatrixXd &feature)
 		}
 		id[3] = VERTS + i;
 		norm = (v[1] - v[0]).cross(v[2] - v[0]);
-		v[3] = (v[0] + ave*norm / norm.norm());
+		v[3] = (v[0] + norm / sqrt(norm.norm()));
 
 		//calc vt
 		Vt[i] = 0.5*abs((v[1] - v[0]).dot((v[2] - v[0]).cross(v[3] - v[0])));
 
 		//calc V-1
+		Eigen::Matrix3d tmp;
 		for (int j = 0; j < 3; ++j) {
-			Eigen::Vector3d tmp = v[j + 1] - v[0];
+			tmp.col(j) = v[j + 1] - v[0];
+		}
+
+		double co = sqrt(Vt[i])/tmp.inverse().norm();
+		for (int j = 0; j < 3; ++j) {
 			for (int k = 0; k < 3; ++k) {
-				V(j * 3 + k, i) = tmp[k];
+				V(j * 3 + k, i) = tmp(k, j)*co;
 			}
 		}
-		
+			
+		//cout << co << endl;
 
 		//calc A
 		for (int j = 0; j < 3; ++j) {
-			tri.push_back({ i * 3 + j, id[j + 1], sqrt(Vt[i]) });
-			tri.push_back({ i * 3 + j, id[0], -sqrt(Vt[i]) });
+			tri.push_back({ i * 3 + j, id[j + 1], co });
+			tri.push_back({ i * 3 + j, id[0], -co });
 		}
 	}
 	A.setFromTriplets(tri.begin(), tri.end());
@@ -526,6 +532,7 @@ void recoverFromFaceFeature(const char* outfile, const Eigen::MatrixXd &feature)
 
 	for (int i = 0; i < feature.cols(); ++i) {
 		newV.col(i) = calcFaceFeature(A, V, feature.col(i));
+		break;
 	}
 	puts("ok");
 
