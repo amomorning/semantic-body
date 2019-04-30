@@ -152,8 +152,18 @@ void testSophus() {
 int main()
 {
 	clock_t t = clock();
-	saveBinaryFRS();
+	//saveBinaryFRS();
+	Eigen::Matrix3d A;
+	A << 1, 5, 6, 2, 4, 8, 3, 7, 9;
+	cout << "A = " << A << endl << endl;
+	Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+	Eigen::Matrix3d U = svd.matrixU();
+	Eigen::Matrix3d V = svd.matrixV();
+	Eigen::Matrix3d S = U.transpose() * A * V;
 
+	cout << "U = " << U << endl << endl;
+	cout << "V = " << V << endl << endl;
+	cout << "S = " << S << endl << endl;
 	
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
 	getchar();
