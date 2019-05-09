@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class RotateModel : MonoBehaviour
 {
@@ -20,6 +21,7 @@ public class RotateModel : MonoBehaviour
             if (tmp < min) min = tmp;
         }
         AVE.gameObject.transform.position += new Vector3(0.0f,-1.2f-min,0.0f);
+
     }
 
     void Update()

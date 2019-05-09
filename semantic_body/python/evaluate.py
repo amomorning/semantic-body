@@ -57,7 +57,7 @@ plt.plot(x, y_rs, label='RS_pca_rf', color='g')
 plt.plot(x, y_dv_ad, label='dV_ae_dnn', color='c')
 # plt.plot(x, y_rs_ad, label='RS_ae_dnn', color='m')
 plt.ylabel('error')
-# idx = 40
+# idx = 4
 # print(rsprExact[idx, :])
 # plt.plot(x, rawExact[idx, :], label='ground truth', color='r')
 # plt.plot(x, prExact[idx, :], label='dV', color='b')
