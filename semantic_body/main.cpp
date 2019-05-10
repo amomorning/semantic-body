@@ -68,11 +68,11 @@ void testBinaryVFN() {
 	printShape(F);
 }
 
-void measureOne() {
+void measureOne(const char * filename) {
 
 	Eigen::Matrix3Xd V;
 	Eigen::Matrix3Xi F;
-	common::read_obj("./data/AVE.obj", V, F);
+	common::read_obj(filename, V, F);
 	printShape(V, F);
 
 	measure measure;
@@ -103,6 +103,9 @@ void testEigen(Eigen::Vector3d &v) {
 }
 
 void saveBinaryMeasure() {
+
+	//measureOne("./data/AVE.obj");
+
 	Eigen::MatrixXd trainV;
 	Eigen::MatrixXd testV;
 	Eigen::Matrix3Xi F;
@@ -114,6 +117,7 @@ void saveBinaryMeasure() {
 	//saveDijkstra("./data/test/dijkstra", testV, F);
 
 	//measure one;
+	saveRoughExact("./data/train/roughExact", trainV, F);
 	//saveRoughExact("./data/test/roughExact", testV, F);
 
 	//saveExact("./data/test/exact", testV, F);
@@ -153,18 +157,12 @@ int main()
 {
 	clock_t t = clock();
 	//saveBinaryFRS();
-	Eigen::Matrix3d A;
-	A << 1, 5, 6, 2, 4, 8, 3, 7, 9;
-	cout << "A = " << A << endl << endl;
-	Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
-	Eigen::Matrix3d U = svd.matrixU();
-	Eigen::Matrix3d V = svd.matrixV();
-	Eigen::Matrix3d S = U.transpose() * A * V;
 
-	cout << "U = " << U << endl << endl;
-	cout << "V = " << V << endl << endl;
-	cout << "S = " << S << endl << endl;
-	
+	//measureOne("./dataset/train/SPRING0001.obj");
+
+
+	saveBinaryMeasure();
+
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
 	getchar();
 	return 0;

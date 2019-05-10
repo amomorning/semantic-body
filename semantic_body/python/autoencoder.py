@@ -8,7 +8,7 @@ RS = np.log(RS)
 D = np.fromfile('../data/train/roughExact')[2:]
 D.resize(1400, 26)
 from sklearn.model_selection import train_test_split
-x_train, x_test, y_train, y_test = train_test_split(D, V, test_size=0.1, random_state=2)
+x_train, x_test, y_train, y_test = train_test_split(D, RS, test_size=0.1, random_state=2)
 
 
 

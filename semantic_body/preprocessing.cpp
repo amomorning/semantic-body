@@ -61,13 +61,13 @@ vector<string> getFiles(const string &cate_dir)
 //Calculate the average data
 void calcAverage(const char * filename, const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F) {
 	Eigen::MatrixXd newV = V.rowwise().mean();
-	
+
 	newV.resize(3, VERTS);
 	common::save_obj(filename, newV, F);
 	//cout << "ojk";
 }
 
-void calcDeltaVerts(const char* filename, Eigen::MatrixXd &V) 
+void calcDeltaVerts(const char* filename, Eigen::MatrixXd &V)
 {
 	Eigen::MatrixXd ave = V.rowwise().mean();
 
@@ -106,7 +106,7 @@ void writeVTK(const char * filename, Eigen::Matrix3Xd &V) {
 		nodes.push_back(V(0, i));
 		nodes.push_back(V(1, i));
 		nodes.push_back(V(2, i));
-		
+
 		if (i) {
 			lines.push_back(i - 1);
 			lines.push_back(i);
@@ -143,48 +143,56 @@ void saveRoughExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matri
 
 	ret.resize(measure.len(), V.cols());
 
+	ret.setZero();
 
 	for (int k = 0; k < measure.len(); ++k) {
-		std::vector<node> path;
-		ifstream in("./data/path/" + measure.SemanticLable[k], ios::binary);
-		int len;
-		in.read((char*)(&len), sizeof(int));
-		for (int i = 0; i < len; ++i) {
-			int x, y;
-			double t;
-			in.read((char*)(&x), sizeof(int));
-			in.read((char*)(&y), sizeof(int));
-			in.read((char*)(&t), sizeof(double));
-			path.push_back({ x, y, t });
-			//cout << x << " " << y << " " << t << endl;
-		}
-		in.close();
-		
-		// Todo: check difference between measured Exact and preserved calculation 
-		// or just visualize it.
-		for (int i = 0; i < V.cols(); ++i) {
-			Eigen::MatrixXd tmp = V.col(i);
-			tmp.resize(3, VERTS);
-			
-			Eigen::Matrix3Xd VV;
-			VV.resize(3, path.size());
-			int cnt = 0;
-			for (auto u : path) {
-				Eigen::Vector3d v0 = tmp.col(u.x);
-				Eigen::Vector3d v1 = tmp.col(u.y);
-				
-				VV.col(cnt++) = v0 + (v1 - v0)*u.t;
+		int tot = 1;
+		if (k < 14) tot = 4;
+		for (int j = 0; j < tot; ++j) {
+			cout << "now " << measure.SemanticLable[k] << endl;
+			std::vector<node> path;
+			ifstream in("./data/path/" + measure.SemanticLable[k]+to_string(j), ios::binary);
+			int len;
+			in.read((char*)(&len), sizeof(int));
+			for (int i = 0; i < len; ++i) {
+				int x, y;
+				double t;
+				in.read((char*)(&x), sizeof(int));
+				in.read((char*)(&y), sizeof(int));
+				in.read((char*)(&t), sizeof(double));
+				path.push_back({ x, y, t });
+				//cout << x << " " << y << " " << t << endl;
 			}
+			in.close();
 
-			//string name = "./checkVTK/" + measure.SemanticLable[k] + ".vtk";
-			//writeVTK(name.c_str(), VV);
-			//break;
+			cout << path.size() << endl;
+			// Todo: check difference between measured Exact and preserved calculation 
+			// or just visualize it.
+			for (int i = 0; i < V.cols(); ++i) {
+				Eigen::MatrixXd tmp = V.col(i);
+				tmp.resize(3, VERTS);
 
-			double res = 0;
-			for (int i = 0; i < VV.cols()-1; i += 1) {
-				res += (VV.col(i) - VV.col(i + 1)).norm();
+				Eigen::Matrix3Xd VV;
+				VV.resize(3, path.size());
+				int cnt = 0;
+				for (auto u : path) {
+					Eigen::Vector3d v0 = tmp.col(u.x);
+					Eigen::Vector3d v1 = tmp.col(u.y);
+
+					VV.col(cnt++) = v0 + (v1 - v0)*u.t;
+				}
+
+				//string name = "./checkVTK/" + measure.SemanticLable[k] + ".vtk";
+				//writeVTK(name.c_str(), VV);
+				//break;
+
+				double res = 0;
+				for (int tt = 0; tt < VV.cols() - 1; tt++) {
+					res += (VV.col(tt) - VV.col(tt + 1)).norm();
+				}
+
+				ret(k, i) += res;
 			}
-			ret(k, i) = res * 0.5;
 		}
 	}
 	//cout << ret.block(0, 0, 10, 10) << endl;
@@ -194,6 +202,7 @@ void saveRoughExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matri
 	//cout << endl << dijk.block(0, 0, 10, 10) << endl;
 	cout << "roughExact saved" << endl;
 	cout << ret.rows() << " " << ret.cols() << endl;
+	cout << ret.col(0) << endl;
 	common::write_matrix_binary_to_file(filename, ret);
 }
 
@@ -343,7 +352,7 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 
 			Eigen::Vector3d a = V.col(j) - V.col(i);
 			Eigen::Vector3d b = Va.col(j) - Va.col(i);
-			
+
 			double wij = it.value();
 
 			A += wij * b*b.transpose();
@@ -366,12 +375,12 @@ void calcFeature(const Eigen::SparseMatrix<double> &W,
 }
 
 
-void saveFeature(const char* filename, 
+void saveFeature(const char* filename,
 	const Eigen::MatrixXd &V,
-	 Eigen::Matrix3Xi &F)
+	Eigen::Matrix3Xi &F)
 {
 	Eigen::MatrixXd feature;
-	feature.resize( 12 * VERTS, V.cols());
+	feature.resize(12 * VERTS, V.cols());
 
 	Eigen::Matrix3Xd Va;
 	common::read_obj("./data/AVE.obj", Va, F);
@@ -410,7 +419,7 @@ void calcFeature(Eigen::MatrixXd V,
 		}
 		norm = (v[1] - v[0]).cross(v[2] - v[0]);
 		v[3] = v[0] + norm / sqrt(norm.norm());
-		
+
 		for (int j = 0; j < 3; ++j) {
 			t.col(j) = v[j + 1] - v[0];
 		}
@@ -419,8 +428,8 @@ void calcFeature(Eigen::MatrixXd V,
 			v[j] = Va.col(F(j, i));
 		}
 		norm = (v[1] - v[0]).cross(v[2] - v[0]);
-		v[3] =  v[0] + norm / sqrt(norm.norm());
-		
+		v[3] = v[0] + norm / sqrt(norm.norm());
+
 		for (int j = 0; j < 3; ++j) {
 			ta.col(j) = v[j + 1] - v[0];
 		}

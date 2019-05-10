@@ -129,6 +129,9 @@ void measure::savePath(std::ofstream &out, const std::vector<geodesic::SurfacePo
 			cout << e->v1()->id() << " ";
 			cout << p.distance(e->v0()) / e->length();
 		}
+		else {
+			cout << "wrong point type" << p.type() << endl;
+		}
 		out.write((const char*)(&x), sizeof(int));
 		out.write((const char*)(&y), sizeof(int));
 		out.write((const char*)(&t), sizeof(double));
@@ -136,11 +139,12 @@ void measure::savePath(std::ofstream &out, const std::vector<geodesic::SurfacePo
 	}
 }
 
-void measure::calcLength(geodesic::GeodesicAlgorithmBase *algo, 
+void measure::calcLength(geodesic::GeodesicAlgorithmBase *algo,
 	geodesic::Mesh &mesh, bool save)
 {
 	/*******************Calculate Geodesic Length*******************/
 	for (int i = 0; i < M; ++i) {
+		cout << "now " << SemanticLable[N + i] << endl;
 		int s = lengthKeyPoint[i][0];
 		int t = lengthKeyPoint[i][1];
 		std::vector<geodesic::SurfacePoint> source;
@@ -155,11 +159,11 @@ void measure::calcLength(geodesic::GeodesicAlgorithmBase *algo,
 		algo->trace_back(target, path);
 		geodesic::print_info_about_path(path);
 		length[i] = geodesic::length(path);
-		
+
 		int len = path.size();
 		if (save) {
 
-			ofstream out("./data/path/" + SemanticLable[N + i], ios::binary);
+			ofstream out("./data/path/" + SemanticLable[N + i] + "0", ios::binary);
 			out.write((const char*)(&len), sizeof(int));
 
 			savePath(out, path);
@@ -172,13 +176,13 @@ void measure::calcLength(geodesic::GeodesicAlgorithmBase *algo,
 }
 
 
-void measure::calcCircle(geodesic::GeodesicAlgorithmBase *algo, 
+void measure::calcCircle(geodesic::GeodesicAlgorithmBase *algo,
 	geodesic::Mesh &mesh, bool save)
 {
 	/*********************Calculate Circumstance********************/
 
 	for (int i = 0; i < N; ++i) {
-		
+		cout << "now " << SemanticLable[i] << endl;
 		std::vector<geodesic::SurfacePoint> path[4];
 		int len = 0;
 		for (int j = 0; j < 4; ++j) {
@@ -200,15 +204,12 @@ void measure::calcCircle(geodesic::GeodesicAlgorithmBase *algo,
 			len += path[j].size();
 			//string name = "./checkVTK/" + to_string(i) +"-" + to_string(j) + "-" + SemanticLable[i]+ ".vtk";
 			//writeVTK(name, path);
-		}
-		if (save) {
-
-			ofstream out("./data/path/" + SemanticLable[i], ios::binary);
-			out.write((const char*)(&len), sizeof(int));
-			for (int j = 0; j < 4; ++j) {
+			if (save) {
+				ofstream out("./data/path/" + SemanticLable[i]+to_string(j), ios::binary);
+				out.write((const char*)(&len), sizeof(int));
 				savePath(out, path[j]);
+				out.close();
 			}
-			out.close();
 		}
 		//printInfo(i);
 	}
