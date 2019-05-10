@@ -9,7 +9,7 @@ rawExact = np.fromfile('../data/test/roughExact')[2:]
 rawExact.resize(rows, cols)
 print(rawExact)
 
-rsadExact = np.fromfile('../data/recover/testroughExact')[2:]
+rsadExact = np.fromfile('../data/recover/pca_logrs_roughExact')[2:]
 rsadExact.resize(rows, cols)
 print(rsadExact)
 
@@ -28,7 +28,7 @@ def median(a, b, ax):
 
 from sklearn import metrics
 print("MSE dv:")
-print(np.sum(rawExact-rsadExact))
+print(MSE(rawExact, rsadExact, (0, 1)))
 
 x = np.arange(0, cols)
 

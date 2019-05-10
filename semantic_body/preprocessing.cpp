@@ -69,7 +69,11 @@ void calcAverage(const char * filename, const Eigen::MatrixXd &V, const Eigen::M
 
 void calcDeltaVerts(const char* filename, Eigen::MatrixXd &V)
 {
-	Eigen::MatrixXd ave = V.rowwise().mean();
+	Eigen::Matrix3Xd Va;
+	Eigen::Matrix3Xi F;
+	common::read_obj("./data/AVE.obj", Va, F);
+
+	Eigen::VectorXd ave = Eigen::Map<Eigen::VectorXd>(Va.data(), Va.size());
 
 	for (int i = 0; i < V.cols(); ++i) {
 		V.col(i) -= ave;

@@ -132,10 +132,11 @@ void saveBinaryFRS() {
 	common::read_matrix_binary_from_file("./data/train/V", trainV);
 	common::read_matrix_binary_from_file("./data/test/V", testV);
 
-	//saveFaceFeature("./data/train/logRS", trainV, F);
+	saveFaceFeature("./data/test/logRS", testV, F);
+	saveFaceFeature("./data/train/logRS", trainV, F);
 	//cout << F.rows() << " " << F.cols() << endl;
 	
-	saveFeature("./data/test/RS", testV, F);
+	//saveFeature("./data/test/logRS", testV, F);
 	cout << "saved!!!" << endl;
 }
 
@@ -161,7 +162,25 @@ int main()
 	//measureOne("./dataset/train/SPRING0001.obj");
 
 
-	saveBinaryMeasure();
+	Eigen::MatrixXd trainV;
+	Eigen::MatrixXd testV;
+	Eigen::Matrix3Xi F;
+
+	common::read_matrix_binary_from_file("./data/train/V", trainV);
+	common::read_matrix_binary_from_file("./data/test/V", testV);
+	common::read_matrix_binary_from_file("./data/F", F);
+	cout << F.cols() << endl;
+
+	//calcAverage();
+	calcAverage("./data/AVE.obj", trainV, F);
+
+	// train dV (37500, 1400)
+	calcDeltaVerts("./data/train/dV", trainV);
+
+	// test dV (37500, 111)
+	calcDeltaVerts("./data/test/dV", testV);
+
+	//saveBinaryMeasure();
 
 	cout << (double)(clock() - t) / CLOCKS_PER_SEC << "seconds..." << endl;
 	getchar();

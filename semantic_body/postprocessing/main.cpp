@@ -438,7 +438,7 @@ void recoverFromVertex(const char* infile, const char* outfile) {
 
 
 void getVertexMeature(const char* infile, const char* outfile) {
-	recoverFromVertex("../data/recover/newV","../data/recover/dV_aednn_roughexact");
+	recoverFromVertex(infile, outfile);
 
 }
 
@@ -582,10 +582,12 @@ void getFaceFeatureMeature(const char* infile, const char* outfile) {
 
 int main() {
 
-	getFaceFeatureMeature("../data/recover/newlogRS", "../data/recover/testroughExact");
+	//getFaceFeatureMeature("../data/recover/pca_logrs", "../data/recover/pca_logrs_roughExact");
 	//Eigen::MatrixXd feature;
 	//common::read_matrix_binary_from_file("../data/test/logRS", feature);
 	//recoverFromFaceFeature("../data/recover/testroughExact", feature);
+
+	getVertexMeature("../data/recover/ae_dv", "../data/recover/ae_dv_roughexact");
 
 	getchar();
 }
