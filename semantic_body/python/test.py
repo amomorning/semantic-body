@@ -17,8 +17,10 @@ x = np.arange(0, cols)
 plt.errorbar(x, y4, yerr=y3, c='r', linewidth=1)
 plt.scatter(x, y1, c='b')
 plt.scatter(x, y2, c='b')
-plt.savefig('../images/chartgraph/measuredata.png',bbox_inches='tight')
 
 print(y1)
 print(y2)
+
+plt.title('Range of each measurement label')
+plt.savefig('../images/chartgraph/measurerange.png')
 plt.show()

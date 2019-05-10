@@ -34,7 +34,4 @@ x = np.arange(0, cols)
 
 plt.plot(x, MSE(rawExact, rsadExact, 0), label='dV_pca_rf', color='b')
 
-plt.title('Median')
-plt.legend(loc='best')
-plt.show()
 
