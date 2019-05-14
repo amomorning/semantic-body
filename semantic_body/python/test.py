@@ -22,5 +22,5 @@ print(y1)
 print(y2)
 
 plt.title('Range of each measurement label')
-plt.savefig('../images/chartgraph/measurerange.png')
+plt.savefig('../images/chartgraph/measure.png',bbox_inches='tight')
 plt.show()

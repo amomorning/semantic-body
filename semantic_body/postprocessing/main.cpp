@@ -22,6 +22,7 @@ struct node {
 };
 
 
+const string filepath = "C:/Users/amomorning/source/repos/semantic_body/semantic_body/postprocessing/";
 void calc_cot_angles(const Eigen::MatrixXd &V, const Eigen::Matrix3Xi &F,
 	Eigen::Matrix3Xd &cot_angles)
 {
@@ -147,7 +148,7 @@ void saveRoughExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matri
 		for (int j = 0; j < tot; ++j) {
 			cout << "now " << measure.SemanticLable[k] << endl;
 			std::vector<node> path;
-			ifstream in("../data/path/" + measure.SemanticLable[k] + to_string(j), ios::binary);
+			ifstream in(filepath + "../data/path/" + measure.SemanticLable[k] + to_string(j), ios::binary);
 			int len;
 			in.read((char*)(&len), sizeof(int));
 			for (int i = 0; i < len; ++i) {
@@ -198,7 +199,7 @@ void saveRoughExact(const char* filename, const Eigen::MatrixXd &V, Eigen::Matri
 	//cout << endl << dijk.block(0, 0, 10, 10) << endl;
 	cout << "roughExact saved" << endl;
 	cout << ret.rows() << " " << ret.cols() << endl;
-	cout << ret.col(1) << endl;
+	cout << ret.col(0) << endl;
 	common::write_matrix_binary_to_file(filename, ret);
 }
 
@@ -401,7 +402,7 @@ void recoverFromFeature(const char* filename, Eigen::MatrixXd &feature) {
 	
 	Eigen::MatrixXd tmp = newV.col(0);
 	tmp.resize(3, VERTS);
-	common::save_obj("../data/recover/TEMP.obj", tmp, F);
+	common::save_obj((filepath + "../../bodyViz/Assets/Models/TEMP.obj").c_str(), tmp, F);
 	cout << "New obj saved!!" << endl;
 
 	saveRoughExact(filename, newV, F);
@@ -423,7 +424,7 @@ void readNewFaceFeature(const char* filename, Eigen::MatrixXd &feature, int tota
 void recoverFromVertex(const char* infile, const char* outfile) {
 	Eigen::Matrix3Xd Va;
 	Eigen::Matrix3Xi F;
-	common::read_obj("../data/AVE.obj", Va, F);
+	common::read_obj((filepath + "../data/AVE.obj").c_str(), Va, F);
 
 	Eigen::MatrixXd V;
 	readNewPoint(infile, V, Va, 111);
@@ -432,7 +433,7 @@ void recoverFromVertex(const char* infile, const char* outfile) {
 	
 	Eigen::MatrixXd tmp = V.col(35);
 	tmp.resize(3, VERTS);
-	common::save_obj("../data/recover/TEMP.obj", tmp, F);
+	common::save_obj((filepath + "../../bodyViz/Assets/Models/TEMP.obj").c_str(), tmp, F);
 	cout << "New obj saved!!" << endl;
 }
 
@@ -495,7 +496,7 @@ void recoverFromFaceFeature(const char* outfile, const Eigen::MatrixXd &feature)
 
 	Eigen::Matrix3Xd Va;
 	Eigen::Matrix3Xi Fa;
-	common::read_obj("../data/AVE.obj", Va, Fa);
+	common::read_obj((filepath + "../data/AVE.obj").c_str(), Va, Fa);
 
 	Surface_mesh mesh;
 	build_mesh(Va, Fa, mesh);
@@ -553,7 +554,7 @@ void recoverFromFaceFeature(const char* outfile, const Eigen::MatrixXd &feature)
 
 	Eigen::MatrixXd tmp = newV.col(0);
 	tmp.resize(3, VERTS);
-	common::save_obj("../data/recover/TEMP.obj", tmp, Fa);
+	common::save_obj((filepath + "../../bodyViz/Assets/Resources/TEMP.obj").c_str(), tmp, Fa);
 	cout << "New obj saved!!" << endl;
 
 
@@ -579,15 +580,21 @@ void getFaceFeatureMeature(const char* infile, const char* outfile) {
 	recoverFromFaceFeature(outfile, feature);
 }
 
+void recoverModelFromRS(const char* infile) {
+	Eigen::MatrixXd feature;
+
+	readNewFaceFeature(infile, feature, 1);
+
+	recoverFromFaceFeature((filepath + "../data/recover/newMeasure").c_str(), feature);
+}
 
 int main() {
+	recoverModelFromRS((filepath + "../data/recover/testRS").c_str());
 
-	getFaceFeatureMeature("../data/recover/logrs_pca_rnn", "../data/recover/logrs_pca_rnn_roughExact");
+	//getFaceFeatureMeature("../data/recover/testRS", "../data/recover/logrs_pca_rnn_roughExact");
 	//Eigen::MatrixXd feature;
 	//common::read_matrix_binary_from_file("../data/test/logRS", feature);
 	//recoverFromFaceFeature("../data/recover/testroughExact", feature);
 
 	//getVertexMeature("../data/recover/dv_ae_rnn", "../data/recover/dv_ae_rnn_roughexact");
-
-	getchar();
 }

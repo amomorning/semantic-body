@@ -15,6 +15,14 @@ public class AddSlider : MonoBehaviour
 
     public void textUpdate(float value)
     {
+        if (text == null)
+        {
+            text = GetComponent<Text>();
+        }
+        if (text == null)
+        {
+            Debug.LogError("why ???");
+        }
         text.text = Mathf.RoundToInt(value * 100) + "cm";
     }
 }
