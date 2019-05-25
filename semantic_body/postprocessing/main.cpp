@@ -597,4 +597,5 @@ int main() {
 	//recoverFromFaceFeature("../data/recover/testroughExact", feature);
 
 	//getVertexMeature("../data/recover/dv_ae_rnn", "../data/recover/dv_ae_rnn_roughexact");
+	getchar();
 }

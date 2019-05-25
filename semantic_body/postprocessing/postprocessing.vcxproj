@@ -78,12 +78,12 @@
     <LibraryPath>C:\Program Files\surface_mesh\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\amomorning\source\repos\semantic_body\include;C:\Users\amomorning\Documents\external\x64\eigen3;C:\Users\amomorning\Documents\external\x64\surface_mesh\include\surface_mesh;C:\Users\amomorning\Documents\external\x64\Sophus\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\surface_mesh\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\amomorning\source\repos\semantic_body\include;C:\Users\amomorning\Documents\external\x64\eigen3;C:\Users\amomorning\Documents\external\x64\surface_mesh\include\surface_mesh;C:\Users\amomorning\Documents\external\x64\Sophus\include;C:\Users\amomorning\Documents\external\x64\surface_mesh\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\amomorning\Documents\external\x64\surface_mesh\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\amomorning\source\repos\semantic_body\include;C:\Users\amomorning\Documents\external\x64\eigen3;C:\Users\amomorning\Documents\external\x64\surface_mesh\include\surface_mesh;C:\Users\amomorning\Documents\external\x64\Sophus\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\surface_mesh\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\amomorning\source\repos\semantic_body\include;C:\Users\amomorning\Documents\external\x64\eigen3;C:\Users\amomorning\Documents\external\x64\surface_mesh\include\surface_mesh;C:\Users\amomorning\Documents\external\x64\Sophus\include;C:\Users\amomorning\Documents\external\x64\surface_mesh\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\amomorning\Documents\external\x64\surface_mesh\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
